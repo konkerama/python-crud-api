@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: orders
+  labels:
+    app: client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      containers:
+        - name: client
+          image: client
+          ports:
+            - containerPort: 8080
+          env:
+          - name: ENV
+            value: "dev"
+          - name: OTEL_TRACES_EXPORTER
+            value: "console,otlp"
+          - name: OTEL_SERVICE_NAME
+            value: "demo-flask"
+          - name: OTEL_METRICS_EXPORTER
+            value: "none"
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: "http://opentelemetry-collector.monitoring.svc.cluster.local:4317"
+          - name: OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST
+            value: "Accept-Encoding,User-Agent,Referer"
+          - name: OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE
+            value: "Last-Modified,Content-Type"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client
+  namespace: orders
+spec:
+  selector:
+    app: client
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: foo-app
+  namespace: orders
+  labels:
+    app: app1
+    component: foo1
+spec:
+  containers:
+  - name: foo-app
+    image: hashicorp/http-echo:0.2.3
+    args:
+    - "-text=hello from namespace default"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: foo1
+  namespace: orders
+spec:
+  type: LoadBalancer
+  selector:
+    component: foo1
+  ports:
+  - port: 5678

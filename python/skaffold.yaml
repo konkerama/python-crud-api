@@ -1,0 +1,12 @@
+apiVersion: skaffold/v4beta5
+kind: Config
+metadata:
+  name: app
+build:
+  artifacts:
+    - image: client
+      docker:
+        dockerfile: Dockerfile.dev
+manifests:
+  rawYaml:
+    - k8s/app.yaml
