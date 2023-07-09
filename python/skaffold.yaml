@@ -6,7 +6,7 @@ build:
   artifacts:
     - image: client
       docker:
-        dockerfile: Dockerfile.dev
+        dockerfile: Dockerfile
 manifests:
   rawYaml:
     - k8s/app.yaml

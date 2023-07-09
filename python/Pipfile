@@ -16,6 +16,9 @@ opentelemetry-exporter-otlp-proto-grpc = "*"
 opentelemetry-distro = "*"
 opentelemetry-exporter-otlp = "*"
 opentelemetry-instrumentation-wsgi = "*"
+pymongo = {version = "*", extras = ["srv"]}
+pandas = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
