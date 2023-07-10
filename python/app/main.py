@@ -60,15 +60,6 @@ POSTGRES_PASSWORD= os.environ['POSTGRES_PASSWORD']
 POSTGRES_DB= os.environ['POSTGRES_DB']
 POSTGRES_URL= os.environ['POSTGRES_URL']
 
-# conn = psycopg2.connect(database=POSTGRES_DB,
-#                         host=POSTGRES_URL,
-#                         user=POSTGRES_USER,
-#                         password=POSTGRES_PASSWORD,
-#                         port="5432")
-
-
-
-# conn = pg_connection()
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_URL}:5432/{POSTGRES_DB}"
 db = SQLAlchemy(app)
 
