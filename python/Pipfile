@@ -19,6 +19,7 @@ opentelemetry-instrumentation-wsgi = "*"
 pymongo = {version = "*", extras = ["srv"]}
 pandas = "*"
 psycopg2-binary = "*"
+flask-sqlalchemy = "*"
 
 [dev-packages]
 

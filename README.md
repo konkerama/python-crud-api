@@ -36,7 +36,7 @@ POST /pg/customer
 curl -X POST localhost:8080/pg/customer -d '{"customer_name":"mark"}' -H "Content-Type: application/json"
 ```
 ```
-GET /pg/customer?customer_name="sdf"
+GET /pg/customer?customer_name="mark"
 curl localhost:8080/pg/customer?customer_name=mark
 ```
 
@@ -75,3 +75,48 @@ update dict:
 
 mongo jsonify (we use the bjon library that is built in the psycopg2-binary):
 - https://stackoverflow.com/questions/16586180/typeerror-objectid-is-not-json-serializable
+
+
+### Postges query
+#### Traditional way
+``` python
+def pg_connection():
+    if conn.closed():
+        return conn
+    conn = psycopg2.connect(database=POSTGRES_DB,
+                            host=POSTGRES_URL,
+                            user=POSTGRES_USER,
+                            password=POSTGRES_PASSWORD,
+                            port="5432")
+    return conn
+
+# query
+cursor = conn.cursor()
+command = f"SELECT * FROM customers WHERE customer_name='{customer_name}'"
+cursor.execute(command)
+cursor.close()
+conn.commit()
+result = cursor.fetchall()
+logger.info(result)
+return result
+
+# post
+cursor = conn.cursor()
+postgres_insert_query = "INSERT INTO customers (customer_name) VALUES (%s)"
+record_to_insert = (customer_name,)
+cursor.execute(postgres_insert_query, record_to_insert)
+conn.commit()
+```
+
+in the current implementation the python `flask_sqlalchemy` library is used as it is a more managed way to communicate with postgres from flask
+
+flask_sqlalchemy urls:
+- https://stackoverflow.com/questions/55523299/best-practices-for-persistent-database-connections-in-python-when-using-flask
+- https://flask-sqlalchemy.palletsprojects.com/en/3.0.x/quickstart/#installation
+- https://flask-sqlalchemy.palletsprojects.com/en/3.0.x/queries/
+- https://python-adv-web-apps.readthedocs.io/en/latest/flask_db1.html
+- https://stackabuse.com/using-sqlalchemy-with-flask-and-postgresql/
+- https://stackoverflow.com/questions/42225127/how-to-do-a-select-query-using-flask-and-sqlalchemy
+- https://flask-sqlalchemy.palletsprojects.com/en/2.x/queries/
+- https://www.digitalocean.com/community/tutorials/how-to-use-flask-sqlalchemy-to-interact-with-databases-in-a-flask-application
+- 

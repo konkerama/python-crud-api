@@ -10,6 +10,7 @@ import requests
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.wsgi import OpenTelemetryMiddleware
 import json
+from flask_sqlalchemy import SQLAlchemy
 
 
 from opentelemetry import trace
@@ -53,31 +54,42 @@ RequestsInstrumentor().instrument()
 
 MONGODB_USERNAME= os.environ['ME_CONFIG_MONGODB_ADMINUSERNAME']
 MONGODB_PASSWD= os.environ['ME_CONFIG_MONGODB_ADMINPASSWORD']
+ME_CONFIG_MONGODB_SERVER=os.environ['ME_CONFIG_MONGODB_SERVER']
 POSTGRES_USER= os.environ['POSTGRES_USER']
 POSTGRES_PASSWORD= os.environ['POSTGRES_PASSWORD']
 POSTGRES_DB= os.environ['POSTGRES_DB']
 POSTGRES_URL= os.environ['POSTGRES_URL']
 
-conn = psycopg2.connect(database=POSTGRES_DB,
-                        host=POSTGRES_URL,
-                        user=POSTGRES_USER,
-                        password=POSTGRES_PASSWORD,
-                        port="5432")
+# conn = psycopg2.connect(database=POSTGRES_DB,
+#                         host=POSTGRES_URL,
+#                         user=POSTGRES_USER,
+#                         password=POSTGRES_PASSWORD,
+#                         port="5432")
 
-def pg_connection():
-    if conn.closed():
-        return conn
-    conn = psycopg2.connect(database=POSTGRES_DB,
-                            host=POSTGRES_URL,
-                            user=POSTGRES_USER,
-                            password=POSTGRES_PASSWORD,
-                            port="5432")
-    return conn
 
-conn = pg_connection()
+
+# conn = pg_connection()
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_URL}:5432/{POSTGRES_DB}"
+db = SQLAlchemy(app)
+
+class CustomersModel(db.Model):
+    __tablename__ = 'customers'
+
+    customer_id = db.Column(db.Integer, primary_key=True)
+    customer_name = db.Column(db.String())
+
+    def __init__(self, name):
+        self.customer_name = name
+
+    def __repr__(self):
+        return f"<Customer {self.customer_name}>"
+
+
+with app.app_context():
+    db.create_all()
 
 def get_database():
-    CONNECTION_STRING = f"mongodb://{MONGODB_USERNAME}:{MONGODB_PASSWD}@mongodb/"
+    CONNECTION_STRING = f"mongodb://{MONGODB_USERNAME}:{MONGODB_PASSWD}@{ME_CONFIG_MONGODB_SERVER}/"
     client = MongoClient(CONNECTION_STRING)
     return client['orders']
 
@@ -114,30 +126,22 @@ def pg_customer():
     if(request.method == 'GET'):
         logger.info('pg customer get')
         logger.info(print(request.query_string))
-        try: 
-            customer_name = request.args.get('customer_name')
-            logger.info (f"querying postgres for customer: {customer_name}")
-            cursor = conn.cursor()
-            command = f"SELECT * FROM customers WHERE customer_name='{customer_name}'"
-            cursor.execute(command)
-            # cursor.close()
-            conn.commit()
-        catch: 
+        customer_name = request.args.get('customer_name')
+        logger.info (f"querying postgres for customer: {customer_name}")
+        customer = CustomersModel.query.filter_by(customer_name=customer_name).first()
+        customer_info = {'customer_name': customer.customer_name,'customer_id': customer.customer_id}
+        logger.info (customer_info)
+        return(jsonify(customer_info))
 
-        result = cursor.fetchall()
-        logger.info(result)
-        return result
     else:
         logger.info('pg customer post')
         logger.info(request.form)
         logger.info(request.json)
         customer_name = request.json.get('customer_name')
         logger.info (f"creating customer: {customer_name}")
-        cursor = conn.cursor()
-        postgres_insert_query = "INSERT INTO customers (customer_name) VALUES (%s)"
-        record_to_insert = (customer_name,)
-        cursor.execute(postgres_insert_query, record_to_insert)
-        conn.commit()
+        new_customer = CustomersModel(name=customer_name)
+        db.session.add(new_customer)
+        db.session.commit()
         logger.info(f"customer {customer_name} inserted")
         return jsonify({'customer': customer_name,'status': 'inserted'})
 
