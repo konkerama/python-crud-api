@@ -10,19 +10,53 @@ spec:
   selector:
     matchLabels:
       app: client
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: "25%"
+      maxUnavailable: "50%"
   template:
     metadata:
       labels:
         app: client
     spec:
+      # initContainers:
+      # - name: liquibase
+      #   image: liquibase/liquibase:latest
+      #   command: ["liquibase", "update", "--changeLogFile=changelog/changelog.yaml"]
+      #   env:
+      #   - name: LIQUIBASE_LOG_LEVEL
+      #     value: FINE
+      #   - name: LIQUIBASE_COMMAND_URL
+      #     value: "jdbc:postgresql://postgres.customer-product.svc.cluster.local:5432/mydb?autoReconnect=true&useSSL=false"
+      #   - name: LIQUIBASE_COMMAND_USERNAME
+      #     valueFrom:
+      #       secretKeyRef:
+      #         name: postgres-secret
+      #         key: postgres-root-username
+      #   - name: LIQUIBASE_COMMAND_PASSWORD
+      #     valueFrom:
+      #       secretKeyRef:
+      #         name: postgres-secret
+      #         key: postgres-root-password
+      #   volumeMounts:
+      #   - name: liquibase-changelog-volume
+      #     mountPath: /liquibase/changelog
+      # initContainers:
+      # - name: liquibase
+      #   image: redhat/ubi8
+      #   command: ["sleep", "30"]
+      imagePullSecrets:
+      - name: regcred
       containers:
         - name: client
-          image: client
+          # image: client
+          image: konkerama/k8s-application
           ports:
             - containerPort: 8080
           env:
           - name: ENV
-            value: "dev"
+            value: "TO_BE_REPLACED"
           - name: OTEL_TRACES_EXPORTER
             value: "console,otlp"
           - name: OTEL_SERVICE_NAME
@@ -67,6 +101,17 @@ spec:
                 key: postgres-dbname
           - name: POSTGRES_URL
             value: postgres.customer-product.svc.cluster.local
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              httpHeaders:
+            initialDelaySeconds: 3
+            periodSeconds: 3
+      volumes:
+      - name: liquibase-changelog-volume
+        configMap:
+          name: liquibase-changelog
 ---
 apiVersion: v1
 kind: Service
@@ -74,6 +119,7 @@ metadata:
   name: client
   namespace: orders
 spec:
+  type: LoadBalancer
   selector:
     app: client
   ports:
@@ -81,29 +127,24 @@ spec:
       port: 8080
       targetPort: 8080
 ---
-kind: Pod
-apiVersion: v1
-metadata:
-  name: foo-app
-  namespace: orders
-  labels:
-    app: app1
-    component: foo1
-spec:
-  containers:
-  - name: foo-app
-    image: hashicorp/http-echo:0.2.3
-    args:
-    - "-text=hello from namespace default"
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: foo1
-  namespace: orders
-spec:
-  type: LoadBalancer
-  selector:
-    component: foo1
-  ports:
-  - port: 5678
+# apiVersion: autoscaling/v2
+# kind: HorizontalPodAutoscaler
+# metadata:
+#   name: client
+#   namespace: orders
+#   labels:
+#     app: client
+# spec:
+#   scaleTargetRef:
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     name: client
+#   minReplicas: 2
+#   maxReplicas: 10
+#   metrics:
+#   - type: Resource
+#     resource:
+#       name: cpu
+#       target:
+#         type: Utilization
+#         averageUtilization: 50

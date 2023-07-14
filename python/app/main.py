@@ -24,6 +24,7 @@ from pandas import DataFrame
 import psycopg2
 from bson import json_util
 
+# Logging Configuration
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(name)-12s %(levelname)-8s %(filename)s:%(funcName)s %(message)s")
 logFormatter = logging.Formatter("[%(asctime)s] %(name)-12s %(levelname)-8s %(filename)s:%(funcName)s %(message)s")
 logger = logging.getLogger('werkzeug')
@@ -33,24 +34,24 @@ consoleHandler.setFormatter(logFormatter)
 # logger.addHandler(consoleHandler)
 config = helper.read_config()
 
-resource = Resource(attributes={
-SERVICE_NAME: "client",
-"application.name": "client",
-"env.name": "prod"
-})
+# Tracing Configuration
+# resource = Resource(attributes={
+# SERVICE_NAME: "client",
+# "application.name": "client",
+# "env.name": "prod"
+# })
 
-provider = TracerProvider(resource=resource)
-processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://opentelemetry-collector.monitoring.svc.cluster.local:4317"))
-provider.add_span_processor(processor)
-trace.set_tracer_provider(provider)
+# provider = TracerProvider(resource=resource)
+# processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://opentelemetry-collector.monitoring.svc.cluster.local:4317"))
+# provider.add_span_processor(processor)
+# trace.set_tracer_provider(provider)
 
 app = Flask(__name__)
-FlaskInstrumentor().instrument_app(app)
-app.wsgi_app = OpenTelemetryMiddleware(app.wsgi_app, tracer_provider=provider)
+# FlaskInstrumentor().instrument_app(app)
+# app.wsgi_app = OpenTelemetryMiddleware(app.wsgi_app, tracer_provider=provider)
 
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
-RequestsInstrumentor().instrument()
-
+# from opentelemetry.instrumentation.requests import RequestsInstrumentor
+# RequestsInstrumentor().instrument()
 
 MONGODB_USERNAME= os.environ['ME_CONFIG_MONGODB_ADMINUSERNAME']
 MONGODB_PASSWD= os.environ['ME_CONFIG_MONGODB_ADMINPASSWORD']
@@ -75,7 +76,6 @@ class CustomersModel(db.Model):
     def __repr__(self):
         return f"<Customer {self.customer_name}>"
 
-
 with app.app_context():
     db.create_all()
 
@@ -83,7 +83,6 @@ def get_database():
     CONNECTION_STRING = f"mongodb://{MONGODB_USERNAME}:{MONGODB_PASSWD}@{ME_CONFIG_MONGODB_SERVER}/"
     client = MongoClient(CONNECTION_STRING)
     return client['orders']
-
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))

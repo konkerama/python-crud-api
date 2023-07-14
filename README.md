@@ -7,6 +7,9 @@ pipenv run pip freeze > requirements.txt
 
 skaffold dev --trigger=manual
 
+``` bash
+URL=$(minikube service client -n orders --url)
+```
 
 python local testing 
 ``` bash 
@@ -33,17 +36,17 @@ POST /pg/customer
 {
     customer_name="sdf"
 }
-curl -X POST localhost:8080/pg/customer -d '{"customer_name":"mark"}' -H "Content-Type: application/json"
+curl -X POST $URL/pg/customer -d '{"customer_name":"mark"}' -H "Content-Type: application/json"
 ```
 ```
 GET /pg/customer?customer_name="mark"
-curl localhost:8080/pg/customer?customer_name=mark
+curl $URL/pg/customer?customer_name=mark
 ```
 
 ### Mongo
 ```
 GET /mongo/orders?product_name="asdf"
-curl localhost:8080/mongo/orders?product_name=banana
+curl $URL/mongo/orders?product_name=apple
 ```
 ```
 POST /mongo/orders
@@ -51,7 +54,7 @@ POST /mongo/orders
     customer_id="sdf",
     product_name="asd"
 }
-curl -X POST localhost:8080/mongo/orders -d '{"customer_id":"2", "product_name":"apple"}' -H "Content-Type: application/json"
+curl -X POST $URL/mongo/orders -d '{"customer_id":"2", "product_name":"apple"}' -H "Content-Type: application/json"
 ```
 
 ## todo:
@@ -119,4 +122,35 @@ flask_sqlalchemy urls:
 - https://stackoverflow.com/questions/42225127/how-to-do-a-select-query-using-flask-and-sqlalchemy
 - https://flask-sqlalchemy.palletsprojects.com/en/2.x/queries/
 - https://www.digitalocean.com/community/tutorials/how-to-use-flask-sqlalchemy-to-interact-with-databases-in-a-flask-application
-- 
+
+
+## Luiquibase
+https://www.liquibase.com/blog/using-liquibase-in-kubernetes
+Create config map
+``` bash
+kubectl create configmap liquibase-changelog --from-file=liquibase/changelog.xml -n orders -o yaml --dry-run=client  | kubectl apply -f -
+```
+
+urls:
+- https://www.liquibase.org/get-started/quickstart
+- https://docs.liquibase.com/concepts/changelogs/attributes/home.html
+
+liquibase fixing forward is better than rollback
+https://www.liquibase.com/blog/roll-back-database-fix-forward
+
+rolling update: 
+- https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+- https://www.bluematador.com/blog/kubernetes-deployments-rolling-update-configuration
+- https://phoenixnap.com/kb/kubernetes-rolling-update
+- https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+
+## K8s pull from private docker hub
+https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+``` bash
+kubectl create secret generic regcred \
+    --from-file=.dockerconfigjson=$HOME/.docker/config.json \
+    --type=kubernetes.io/dockerconfigjson \
+    -n orders
+
+```

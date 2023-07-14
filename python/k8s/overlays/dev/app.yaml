@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: orders
+spec:
+  template:
+    spec:
+      containers:
+        - name: client
+          image: client
+          env:
+          - name: ENV
+            value: "dev"
+          - name: ENABLE_TELEMETRY
+            value: "false"

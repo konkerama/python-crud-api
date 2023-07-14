@@ -8,5 +8,9 @@ build:
       docker:
         dockerfile: Dockerfile
 manifests:
-  rawYaml:
-    - k8s/app.yaml
+#   rawYaml:
+#     - k8s/app.yaml
+  kustomize:
+    paths:
+    - k8s/overlays/dev/
+

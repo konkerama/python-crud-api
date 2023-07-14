@@ -1,0 +1,23 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="kostas" id="1689252975149">
+        <createTable tableName="customers">
+            <column autoIncrement="true" name="customer_id" startWith="8" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="customers_pkey"/>
+            </column>
+            <column name="customer_name" type="VARCHAR"/>
+            <column name="customer_surname" type="VARCHAR"/>
+            <column name="customer_number" type="VARCHAR"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="asd" author="kostas">
+        <addColumn tableName="customers">
+            <column name="phone" type="VARCHAR"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="asdf" author="kostas">
+        <addColumn tableName="customers">
+            <column name="mobile" type="VARCHAR"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

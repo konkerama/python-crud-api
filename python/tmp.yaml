@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    note: Hello, I am production!
+  labels:
+    app: hello
+  name: production-client
+  namespace: orders
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: hello
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    note: Hello, I am production!
+  labels:
+    app: hello
+  name: production-client
+  namespace: orders
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 50%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        note: Hello, I am production!
+      labels:
+        app: hello
+    spec:
+      containers:
+      - env:
+        - name: ENV
+          value: dev
+        - name: ENABLE_TELEMETRY
+          value: "false"
+        - name: OTEL_TRACES_EXPORTER
+          value: console,otlp
+        - name: OTEL_SERVICE_NAME
+          value: demo-flask
+        - name: OTEL_METRICS_EXPORTER
+          value: none
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: http://opentelemetry-collector.monitoring.svc.cluster.local:4317
+        - name: OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST
+          value: Accept-Encoding,User-Agent,Referer
+        - name: OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE
+          value: Last-Modified,Content-Type
+        - name: ME_CONFIG_MONGODB_ADMINUSERNAME
+          valueFrom:
+            secretKeyRef:
+              key: mongo-root-username
+              name: mongodb-secret
+        - name: ME_CONFIG_MONGODB_ADMINPASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mongo-root-password
+              name: mongodb-secret
+        - name: ME_CONFIG_MONGODB_SERVER
+          valueFrom:
+            configMapKeyRef:
+              key: database_url
+              name: mongodb-configmap
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              key: postgres-root-username
+              name: postgres-secret
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-root-password
+              name: postgres-secret
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              key: postgres-dbname
+              name: postgres-configmap
+        - name: POSTGRES_URL
+          value: postgres.customer-product.svc.cluster.local
+        image: konkerama/k8s-application
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        name: client
+        ports:
+        - containerPort: 8080
+      imagePullSecrets:
+      - name: regcred
+      volumes:
+      - configMap:
+          name: liquibase-changelog
+        name: liquibase-changelog-volume
