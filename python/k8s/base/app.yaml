@@ -6,7 +6,7 @@ metadata:
   labels:
     app: python-app
 spec:
-  replicas: 1
+  # replicas: 1
   selector:
     matchLabels:
       app: python-app
