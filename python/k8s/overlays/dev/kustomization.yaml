@@ -1,6 +1,6 @@
-namePrefix: production-
+namePrefix: dev-
 commonAnnotations:
-  note: Hello, I am production!
+  note: Hello, I am dev!
 resources:
 - ../../base
 apiVersion: kustomize.config.k8s.io/v1beta1
