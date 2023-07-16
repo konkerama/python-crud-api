@@ -82,7 +82,7 @@ spec:
             #     name: mongodb-secret
             #     key: mongo-root-password
           - name: ME_CONFIG_MONGODB_SERVER
-            value: mymongo-mongodb-headless
+            value: mongodb-headless
             # valueFrom: 
             #   configMapKeyRef:
             #     name: mongodb-configmap
@@ -109,7 +109,7 @@ spec:
             #     name: postgres-configmap
             #     key: postgres-dbname
           - name: POSTGRES_URL
-            value: mypostgres-postgresql.customer-product.svc.cluster.local
+            value: postgresql.customer-product.svc.cluster.local
             # value: mypostgres-postgresql-ha-pgpool.customer-product.svc.cluster.local
             # value: postgres.customer-product.svc.cluster.local
           livenessProbe:
