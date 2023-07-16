@@ -4,13 +4,11 @@ metadata:
   name: app
 build:
   artifacts:
-    - image: client
+    - image: local/k8s-application
       docker:
         dockerfile: Dockerfile
 manifests:
-#   rawYaml:
-#     - k8s/app.yaml
   kustomize:
     paths:
-    - k8s/overlays/dev/
+    - k8s/overlays/local/
 

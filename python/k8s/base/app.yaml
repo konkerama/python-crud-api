@@ -6,7 +6,6 @@ metadata:
   labels:
     app: python-app
 spec:
-  # replicas: 1
   selector:
     matchLabels:
       app: python-app
@@ -20,32 +19,32 @@ spec:
       labels:
         app: python-app
     spec:
-      # initContainers:
-      # - name: liquibase
-      #   image: liquibase/liquibase:latest
-      #   command: ["liquibase", "update", "--changeLogFile=changelog/changelog.yaml"]
-      #   env:
-      #   - name: LIQUIBASE_LOG_LEVEL
-      #     value: FINE
-      #   - name: LIQUIBASE_COMMAND_URL
-      #     value: "jdbc:postgresql://postgres.customer-product.svc.cluster.local:5432/mydb?autoReconnect=true&useSSL=false"
-      #   - name: LIQUIBASE_COMMAND_USERNAME
-      #     valueFrom:
-      #       secretKeyRef:
-      #         name: postgres-secret
-      #         key: postgres-root-username
-      #   - name: LIQUIBASE_COMMAND_PASSWORD
-      #     valueFrom:
-      #       secretKeyRef:
-      #         name: postgres-secret
-      #         key: postgres-root-password
-      #   volumeMounts:
-      #   - name: liquibase-changelog-volume
-      #     mountPath: /liquibase/changelog
-      # initContainers:
-      # - name: liquibase
-      #   image: redhat/ubi8
-      #   command: ["sleep", "30"]
+      initContainers:
+      - name: liquibase
+        image: liquibase/liquibase:latest
+        command: ["liquibase", "update", "--changeLogFile=changelog/changelog.yaml"]
+        env:
+        - name: LIQUIBASE_LOG_LEVEL
+          value: FINE
+        - name: LIQUIBASE_COMMAND_URL
+          value: "jdbc:postgresql://postgres.customer-product.svc.cluster.local:5432/mydb?autoReconnect=true&useSSL=false"
+        - name: LIQUIBASE_COMMAND_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-root-username
+        - name: LIQUIBASE_COMMAND_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-root-password
+        volumeMounts:
+        - name: liquibase-changelog-volume
+          mountPath: /liquibase/changelog
+      initContainers:
+      - name: liquibase
+        image: redhat/ubi8
+        command: ["sleep", "30"]
       imagePullSecrets:
       - name: regcred
       containers:

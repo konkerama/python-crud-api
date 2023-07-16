@@ -1,60 +1,53 @@
 # k8s-application
 
-```
+## TODO:
+- Configure application to retrieve db info (mongo & postgres) using k8s secrets.
+- End to End testing using ArgoCD (don't include telemetry for performance reasons)
+- Configure Application (using conditions) to use telemetry from staging environment and on.
+- Write github actions to implement CI:
+  - build container
+  - test python Application
+  - autoincrement semver version
+  - push to dockerhub
+  - automatically open pr when there is a new version??
+
+## Environment Information
+
+### Install a new python package
+
+``` bash
 pipenv install ...
 pipenv run pip freeze > requirements.txt
 ```
 
+### Deploy App to K8s 
+``` bash
 skaffold dev --trigger=manual
+```
+
+### Application Testing
 
 ``` bash
 URL=$(minikube service client -n orders --url)
-```
-
-python local testing 
-``` bash 
-docker compose up --build 
-```
-
-python status:
-- done basic connection to mongodb and added some items
-
-todo:
-- retrieve items from mongo db and send them back via api
-- read a bit in general about how mongo db works
-  - https://www.guru99.com/what-is-mongodb.html
-  - https://www.mongodb.com/languages/python
-  - https://www.mongodb.com/basics/database-index
-- do the same for postgresdb
-
-
-
-## API spec
-### Postgres
-```
-POST /pg/customer
-{
-    customer_name="sdf"
-}
+# Postgres
+# POST /pg/customer
+# { customer_name="sdf" }
 curl -X POST $URL/pg/customer -d '{"customer_name":"mark"}' -H "Content-Type: application/json"
-```
-```
-GET /pg/customer?customer_name="mark"
+# GET /pg/customer?customer_name="mark"
 curl $URL/pg/customer?customer_name=mark
-```
 
-### Mongo
-```
-GET /mongo/orders?product_name="asdf"
+# Mongo
+# POST /mongo/orders
+# { customer_id="sdf", product_name="asd" }
+curl -X POST $URL/mongo/orders -d '{"customer_id":"2", "product_name":"apple"}' -H "Content-Type: application/json"
+# GET /mongo/orders?product_name="asdf"
 curl $URL/mongo/orders?product_name=apple
 ```
-```
-POST /mongo/orders
-{
-    customer_id="sdf",
-    product_name="asd"
-}
-curl -X POST $URL/mongo/orders -d '{"customer_id":"2", "product_name":"apple"}' -H "Content-Type: application/json"
+
+### Testing Using docker compose
+
+``` bash 
+docker compose up --build 
 ```
 
 ## todo:
