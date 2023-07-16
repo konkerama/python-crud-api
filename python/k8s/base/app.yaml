@@ -100,7 +100,7 @@ spec:
             #     key: password
             valueFrom:
               secretKeyRef:
-                name: mypostgres-postgresql
+                name: postgresql
                 key: postgres-password
           - name: POSTGRES_DB
             value: postgres
