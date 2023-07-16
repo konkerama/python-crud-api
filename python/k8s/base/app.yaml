@@ -4,12 +4,12 @@ metadata:
   name: python-app
   namespace: orders
   labels:
-    app: client
+    app: python-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: client
+      app: python-app
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -18,7 +18,7 @@ spec:
   template:
     metadata:
       labels:
-        app: client
+        app: python-app
     spec:
       # initContainers:
       # - name: liquibase
@@ -49,7 +49,7 @@ spec:
       imagePullSecrets:
       - name: regcred
       containers:
-        - name: client
+        - name: python-app
           # image: client
           image: konkerama/k8s-application
           ports:
@@ -127,12 +127,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: client
+  name: python-app
   namespace: orders
 spec:
   type: LoadBalancer
   selector:
-    app: client
+    app: python-app
   ports:
     - protocol: TCP
       port: 8080
@@ -141,15 +141,15 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: client
+  name: python-app
   namespace: orders
   labels:
-    app: client
+    app: python-app
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: client
+    name: python-app
   minReplicas: 2
   maxReplicas: 10
   metrics:

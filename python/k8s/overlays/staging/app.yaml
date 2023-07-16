@@ -7,7 +7,7 @@ spec:
   template:
     spec:
       containers:
-        - name: client
+        - name: python-app
           image: konkerama/k8s-application
           env:
           - name: ENV
