@@ -70,47 +70,24 @@ spec:
             value: "Last-Modified,Content-Type"
           - name: ME_CONFIG_MONGODB_ADMINUSERNAME 
             value: root
-            # valueFrom:
-            #   secretKeyRef:
-            #     name: mongodb-secret
-            #     key: mongo-root-username
           - name: ME_CONFIG_MONGODB_ADMINPASSWORD
-            value: password
-            # valueFrom: 
-            #   secretKeyRef:
-            #     name: mongodb-secret
-            #     key: mongo-root-password
+            valueFrom: 
+              secretKeyRef:
+                name: mongodb
+                key: mongodb-root-password
           - name: ME_CONFIG_MONGODB_SERVER
             value: mongodb-headless
-            # valueFrom: 
-            #   configMapKeyRef:
-            #     name: mongodb-configmap
-            #     key: database_url
           - name: POSTGRES_USER
             value: postgres
-            # valueFrom:
-            #   secretKeyRef:
-            #     name: postgres-secret
-            #     key: postgres-root-username
           - name: POSTGRES_PASSWORD
-            # valueFrom:
-            #   secretKeyRef:
-            #     name: mypostgres-postgresql-ha-postgresql
-            #     key: password
             valueFrom:
               secretKeyRef:
                 name: postgresql
                 key: postgres-password
           - name: POSTGRES_DB
             value: postgres
-            # valueFrom:
-            #   configMapKeyRef:
-            #     name: postgres-configmap
-            #     key: postgres-dbname
           - name: POSTGRES_URL
-            value: postgresql.customer-product.svc.cluster.local
-            # value: mypostgres-postgresql-ha-pgpool.customer-product.svc.cluster.local
-            # value: postgres.customer-product.svc.cluster.local
+            value: postgresql
           livenessProbe:
             httpGet:
               path: /health
