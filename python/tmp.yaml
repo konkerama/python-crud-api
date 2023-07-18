@@ -47,7 +47,7 @@ spec:
         - name: ENV
           value: dev
         - name: ENABLE_TELEMETRY
-          value: "false"
+          value: "False"
         - name: OTEL_TRACES_EXPORTER
           value: console,otlp
         - name: OTEL_SERVICE_NAME

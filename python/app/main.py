@@ -23,6 +23,7 @@ from pymongo import MongoClient
 from pandas import DataFrame
 import psycopg2
 from bson import json_util
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
 # Logging Configuration
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(name)-12s %(levelname)-8s %(filename)s:%(funcName)s %(message)s")
@@ -34,24 +35,30 @@ consoleHandler.setFormatter(logFormatter)
 # logger.addHandler(consoleHandler)
 config = helper.read_config()
 
-# Tracing Configuration
-# resource = Resource(attributes={
-# SERVICE_NAME: "client",
-# "application.name": "client",
-# "env.name": "prod"
-# })
+ENABLE_TELEMETRY= eval(os.environ['ENABLE_TELEMETRY'])
 
-# provider = TracerProvider(resource=resource)
-# processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://opentelemetry-collector.monitoring.svc.cluster.local:4317"))
-# provider.add_span_processor(processor)
-# trace.set_tracer_provider(provider)
+if ENABLE_TELEMETRY:
+    logger.info('ENABLE_TELEMETRY=True, enabling tracing...')
+    # Tracing Configuration
+    resource = Resource(attributes={
+        SERVICE_NAME: "client",
+        "application.name": "client",
+        "env.name": "prod"
+        })
 
-app = Flask(__name__)
-# FlaskInstrumentor().instrument_app(app)
-# app.wsgi_app = OpenTelemetryMiddleware(app.wsgi_app, tracer_provider=provider)
+    provider = TracerProvider(resource=resource)
+    processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://opentelemetry-collector.monitoring.svc.cluster.local:4317"))
+    provider.add_span_processor(processor)
+    trace.set_tracer_provider(provider)
 
-# from opentelemetry.instrumentation.requests import RequestsInstrumentor
-# RequestsInstrumentor().instrument()
+    app = Flask(__name__)
+    FlaskInstrumentor().instrument_app(app)
+    app.wsgi_app = OpenTelemetryMiddleware(app.wsgi_app, tracer_provider=provider)
+
+    RequestsInstrumentor().instrument()
+else:
+    logger.info('ENABLE_TELEMETRY=False, tracing is disabled')
+    app = Flask(__name__)
 
 MONGODB_USERNAME= os.environ['ME_CONFIG_MONGODB_ADMINUSERNAME']
 MONGODB_PASSWD= os.environ['ME_CONFIG_MONGODB_ADMINPASSWORD']

@@ -1,7 +1,6 @@
 # k8s-application
 
 ## TODO:
-- Configure application to retrieve db info (mongo & postgres) using k8s secrets.
 - End to End testing using ArgoCD (don't include telemetry for performance reasons)
 - Configure Application (using conditions) to use telemetry from staging environment and on.
 - Write github actions to implement CI:

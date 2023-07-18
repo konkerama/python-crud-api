@@ -13,4 +13,4 @@ spec:
           - name: ENV
             value: "dev"
           - name: ENABLE_TELEMETRY
-            value: "false"
+            value: "False"
