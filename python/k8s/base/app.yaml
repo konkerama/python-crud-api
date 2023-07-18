@@ -38,9 +38,9 @@ spec:
       #       secretKeyRef:
       #         name: postgres-secret
       #         key: postgres-root-password
-        volumeMounts:
-        - name: liquibase-changelog-volume
-          mountPath: /liquibase/changelog
+        # volumeMounts:
+        # - name: liquibase-changelog-volume
+        #   mountPath: /liquibase/changelog
       imagePullSecrets:
       - name: regcred
       containers:
