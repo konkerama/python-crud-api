@@ -1,6 +1,6 @@
 #!/bin/bash
 
-URL=$(minikube service production-client -n orders --url)
+URL=$(minikube service dev-python-app -n orders --url)
 curl -X POST $URL/pg/customer -d '{"customer_name":"mark"}' -H "Content-Type: application/json"
 curl $URL/pg/customer?customer_name=mark
 curl -X POST $URL/mongo/orders -d '{"customer_id":"2", "product_name":"apple"}' -H "Content-Type: application/json"
