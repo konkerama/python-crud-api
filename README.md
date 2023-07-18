@@ -2,7 +2,6 @@
 
 ## TODO:
 - End to End testing using ArgoCD (don't include telemetry for performance reasons)
-- Configure Application (using conditions) to use telemetry from staging environment and on.
 - Write github actions to implement CI:
   - build container
   - test python Application
