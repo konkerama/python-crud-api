@@ -41,10 +41,6 @@ spec:
         volumeMounts:
         - name: liquibase-changelog-volume
           mountPath: /liquibase/changelog
-      initContainers:
-      - name: liquibase
-        image: redhat/ubi8
-        command: ["sleep", "30"]
       imagePullSecrets:
       - name: regcred
       containers:
