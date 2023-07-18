@@ -14,6 +14,6 @@ resources:
 configMapGenerator:
   - name: liquibase-changelog
     files: # using files here as we want to create a whole file
-      - ../../liquibase/changelog.yaml
+      - changelog.yaml
 generatorOptions:
   disableNameSuffixHash: true # use a static name
