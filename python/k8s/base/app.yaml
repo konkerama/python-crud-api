@@ -27,7 +27,7 @@ spec:
         - name: LIQUIBASE_LOG_LEVEL
           value: FINE
         - name: LIQUIBASE_COMMAND_URL
-          value: "jdbc:postgresql://postgres:5432/postgres?autoReconnect=true&useSSL=false"
+          value: "jdbc:postgresql://postgresql:5432/postgres?autoReconnect=true&useSSL=false"
         - name: LIQUIBASE_COMMAND_USERNAME
           value: postgres
         - name: LIQUIBASE_COMMAND_PASSWORD
