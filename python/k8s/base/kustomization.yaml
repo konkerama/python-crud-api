@@ -13,7 +13,6 @@ resources:
 
 configMapGenerator:
   - name: liquibase-changelog
+    namespace: orders
     files: # using files here as we want to create a whole file
       - changelog.yaml
-generatorOptions:
-  disableNameSuffixHash: true # use a static name

@@ -1,11 +1,66 @@
 apiVersion: v1
+data:
+  changelog.yaml: |+
+    databaseChangeLog:
+    - changeSet:
+        id: 1689337429090-1
+        author: kostas (generated)
+        changes:
+        - createTable:
+            columns:
+            - column:
+                autoIncrement: true
+                constraints:
+                  nullable: false
+                  primaryKey: true
+                  primaryKeyName: customers_pkey
+                name: customer_id
+                type: INTEGER
+            - column:
+                name: customer_name
+                type: VARCHAR
+            - column:
+                name: customer_surname
+                type: VARCHAR
+            - column:
+                name: customer_number
+                type: VARCHAR
+            - column:
+                name: phone
+                type: VARCHAR
+            - column:
+                name: mobile
+                type: VARCHAR
+            tableName: customers
+    - changeSet:
+        id: 2
+        author: kostas
+        changes:
+        - addColumn:
+            tableName: customers
+            columns:
+            - column:
+                name: home
+                type: VARCHAR
+
+
+kind: ConfigMap
+metadata:
+  annotations:
+    note: Hello, I am dev!
+  labels:
+    app: hello
+  name: dev-asdliquibase-changelog
+  namespace: orders
+---
+apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    note: Hello, I am production!
+    note: Hello, I am dev!
   labels:
     app: hello
-  name: production-client
+  name: dev-python-app
   namespace: orders
 spec:
   ports:
@@ -20,13 +75,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    note: Hello, I am production!
+    note: Hello, I am dev!
   labels:
     app: hello
-  name: production-client
+  name: dev-python-app
   namespace: orders
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: hello
@@ -38,7 +92,7 @@ spec:
   template:
     metadata:
       annotations:
-        note: Hello, I am production!
+        note: Hello, I am dev!
       labels:
         app: hello
     spec:
@@ -61,37 +115,25 @@ spec:
         - name: OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE
           value: Last-Modified,Content-Type
         - name: ME_CONFIG_MONGODB_ADMINUSERNAME
-          valueFrom:
-            secretKeyRef:
-              key: mongo-root-username
-              name: mongodb-secret
+          value: root
         - name: ME_CONFIG_MONGODB_ADMINPASSWORD
           valueFrom:
             secretKeyRef:
-              key: mongo-root-password
-              name: mongodb-secret
+              key: mongodb-root-password
+              name: mongodb
         - name: ME_CONFIG_MONGODB_SERVER
-          valueFrom:
-            configMapKeyRef:
-              key: database_url
-              name: mongodb-configmap
+          value: mongodb-headless
         - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              key: postgres-root-username
-              name: postgres-secret
+          value: postgres
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: postgres-root-password
-              name: postgres-secret
+              key: postgres-password
+              name: postgresql
         - name: POSTGRES_DB
-          valueFrom:
-            configMapKeyRef:
-              key: postgres-dbname
-              name: postgres-configmap
+          value: postgres
         - name: POSTGRES_URL
-          value: postgres.customer-product.svc.cluster.local
+          value: postgresql
         image: konkerama/k8s-application
         livenessProbe:
           httpGet:
@@ -99,12 +141,58 @@ spec:
             port: 8080
           initialDelaySeconds: 3
           periodSeconds: 3
-        name: client
+        name: python-app
         ports:
         - containerPort: 8080
       imagePullSecrets:
       - name: regcred
+      initContainers:
+      - command:
+        - liquibase
+        - update
+        - --changeLogFile=changelog/changelog.yaml
+        env:
+        - name: LIQUIBASE_LOG_LEVEL
+          value: FINE
+        - name: LIQUIBASE_COMMAND_URL
+          value: jdbc:postgresql://postgres:5432/postgres?autoReconnect=true&useSSL=false
+        - name: LIQUIBASE_COMMAND_USERNAME
+          value: postgres
+        - name: LIQUIBASE_COMMAND_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: postgresql
+        image: liquibase/liquibase:latest
+        name: liquibase
+        volumeMounts:
+        - mountPath: /liquibase/changelog
+          name: liquibase-changelog-volume
       volumes:
       - configMap:
-          name: liquibase-changelog
+          name: dev-asdliquibase-changelog
         name: liquibase-changelog-volume
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  annotations:
+    note: Hello, I am dev!
+  labels:
+    app: hello
+  name: dev-python-app
+  namespace: orders
+spec:
+  maxReplicas: 10
+  metrics:
+  - resource:
+      name: cpu
+      target:
+        averageUtilization: 50
+        type: Utilization
+    type: Resource
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dev-python-app
