@@ -19,28 +19,25 @@ spec:
       labels:
         app: python-app
     spec:
-      # initContainers:
-      # - name: liquibase
-      #   image: liquibase/liquibase:latest
-      #   command: ["liquibase", "update", "--changeLogFile=changelog/changelog.yaml"]
-      #   env:
-      #   - name: LIQUIBASE_LOG_LEVEL
-      #     value: FINE
-      #   - name: LIQUIBASE_COMMAND_URL
-      #     value: "jdbc:postgresql://postgres.customer-product.svc.cluster.local:5432/mydb?autoReconnect=true&useSSL=false"
-      #   - name: LIQUIBASE_COMMAND_USERNAME
-      #     valueFrom:
-      #       secretKeyRef:
-      #         name: postgres-secret
-      #         key: postgres-root-username
-      #   - name: LIQUIBASE_COMMAND_PASSWORD
-      #     valueFrom:
-      #       secretKeyRef:
-      #         name: postgres-secret
-      #         key: postgres-root-password
-        # volumeMounts:
-        # - name: liquibase-changelog-volume
-        #   mountPath: /liquibase/changelog
+      initContainers:
+      - name: liquibase
+        image: liquibase/liquibase:latest
+        command: ["liquibase", "update", "--changeLogFile=changelog/changelog.yaml"]
+        env:
+        - name: LIQUIBASE_LOG_LEVEL
+          value: FINE
+        - name: LIQUIBASE_COMMAND_URL
+          value: "jdbc:postgresql://postgres:5432/postgres?autoReconnect=true&useSSL=false"
+        - name: LIQUIBASE_COMMAND_USERNAME
+          value: postgres
+        - name: LIQUIBASE_COMMAND_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql
+              key: postgres-password
+        volumeMounts:
+        - name: liquibase-changelog-volume
+          mountPath: /liquibase/changelog
       imagePullSecrets:
       - name: regcred
       containers:
