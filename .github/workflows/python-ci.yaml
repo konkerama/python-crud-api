@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  lint-and-test:
+  lint_test:
     name: 'Lint and Test'
     runs-on: ubuntu-latest
     steps:
@@ -40,9 +40,8 @@ jobs:
   identify_new_version:
     name: Identify New Release
     runs-on: ubuntu-latest
-    needs: lint-and-test
     outputs: 
-      NEW_RELEASE: steps.taggerDryRun.outputs.new_tag
+      NEW_RELEASE: ${{ steps.taggerDryRun.outputs.new_tag }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -68,7 +67,7 @@ jobs:
   docker_build_push:
     name: Docker Build and Push
     runs-on: ubuntu-latest
-    needs: identify_new_version
+    needs: [lint_test, identify_new_version]
     steps:
       -
         name: Set up QEMU
