@@ -1,7 +1,7 @@
 # k8s-application
 
 ## TODO:
-- End to End testing using ArgoCD (don't include telemetry for performance reasons)
+- ivestigate proper flows in managing container image versions on gitops
 - Write github actions to implement CI:
   - build container
   - test python Application
