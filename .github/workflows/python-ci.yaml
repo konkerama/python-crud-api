@@ -51,7 +51,7 @@ jobs:
       id: taggerDryRun
       uses: anothrNick/github-tag-action@1.67.0
       env:
-        # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DRY_RUN: true
 
     - name: echo new tag
@@ -106,7 +106,7 @@ jobs:
           cache-to: type=gha,mode=
           
   bump_up_version:
-    name: Identify New Release
+    name: Bump up Release
     runs-on: ubuntu-latest
     needs: docker_build_push
     steps:
@@ -116,8 +116,8 @@ jobs:
     - name: Minor version for each merge
       id: taggerDryRun
       uses: anothrNick/github-tag-action@1.67.0
-      # env:
-      #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: echo new tag
       run: |
