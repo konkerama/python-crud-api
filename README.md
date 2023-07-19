@@ -4,8 +4,10 @@
 - ivestigate proper flows in managing container image versions on gitops
 - Write github actions to implement CI:
   - test python Application
-  - autoincrement semver version (how to also do a github deployment)
   - automatically open pr when there is a new version??
+    - first use this to clone the project repo locally in ghactions: https://github.com/actions/checkout
+    - then use this to update yaml https://github.com/fjogeleit/yaml-update-action
+    - and then using the gh api to create a pr
 
 ## Environment Information
 
