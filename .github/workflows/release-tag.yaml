@@ -1,0 +1,22 @@
+name: Creation of Release Version
+on:
+  pull_request:
+    branches: [main]
+    types:
+      - closed
+
+jobs:
+  build:
+    name: Create Release  
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Taking the Latest Release Tag number
+        id: releaseVersion
+        run: |
+          owner="konkerama"
+          repo="k8s-application"
+          release_json=$(curl https://api.github.com/repos/$owner/$repo/releases -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}")
+          Release_tag=$(echo "$release_json" | jq -r '.[0].tag_name')
+          echo "Release_tag: Latest Tag is : $Release_tag"
+          echo ::set-output name=Release_tag::"$Release_tag"
