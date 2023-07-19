@@ -69,6 +69,7 @@ POSTGRES_URL= os.environ['POSTGRES_URL']
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_URL}:5432/{POSTGRES_DB}"
 db = SQLAlchemy(app)
 
+# pylint: disable=too-few-public-methods
 class CustomersModel(db.Model):
     __tablename__ = 'customers'
 
@@ -142,7 +143,7 @@ def mongo_orders():
     "product_name" : product_name,
     }
     collection_name.insert_one(item)
-    logger.info(f"item %s inserted", item)
+    logger.info("item %s inserted", item)
     output=parse_json(dict(item, status="inserted"))
     logger.info(output)
     return output
