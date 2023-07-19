@@ -133,7 +133,6 @@ rolling update:
 - https://phoenixnap.com/kb/kubernetes-rolling-update
 - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
 
-
 ## K8s pull from private docker hub
 https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 ``` bash
