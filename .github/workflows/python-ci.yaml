@@ -71,8 +71,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          context: ./src/sample-container
+          context: ./python
           push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
           tags: konkerama/k8s-application:${{github.sha}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+sa
