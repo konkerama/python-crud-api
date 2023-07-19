@@ -56,5 +56,3 @@ jobs:
     - name: echo part
       run: |
         echo "The version increment was: ${{ steps.taggerDryRun.outputs.part }}"
-
-
