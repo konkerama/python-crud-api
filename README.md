@@ -3,10 +3,8 @@
 ## TODO:
 - ivestigate proper flows in managing container image versions on gitops
 - Write github actions to implement CI:
-  - build container
   - test python Application
   - autoincrement semver version
-  - push to dockerhub
   - automatically open pr when there is a new version??
 
 ## Environment Information
