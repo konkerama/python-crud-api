@@ -2,8 +2,6 @@ name: Creation of Release Version
 on:
   pull_request:
     branches: [main]
-    types:
-      - closed
 
 permissions:
   contents: write
