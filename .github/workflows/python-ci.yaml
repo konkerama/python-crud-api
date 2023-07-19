@@ -37,7 +37,33 @@ jobs:
     #     export ENV=${{ env.ENV_NAME }}
     #     pytest
 
-  docker-build-push:
+  identify-version:
+    name: Create Release  
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    outputs:
+      new_version: ${{ steps.step1.outputs.test }}
+    steps:
+      - name: Minor version for each merge
+        id: taggerDryRun
+        uses: anothrNick/github-tag-action@1.36.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DRY_RUN: true
+
+      - name: echo new tag
+        run: |
+          echo "The next tag version will be: ${{ steps.taggerDryRun.outputs.new_tag }}"
+      - name: echo tag
+        run: |
+          echo "The current tag is: ${{ steps.taggerDryRun.outputs.tag }}"
+      - name: echo part
+        run: |
+          echo "The version increment was: ${{ steps.taggerDryRun.outputs.part }}"
+
+  identify-version:
     name: Docker Build and Push
     runs-on: ubuntu-latest
     needs: lint-and-test
