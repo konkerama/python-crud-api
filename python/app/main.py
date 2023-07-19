@@ -1,15 +1,14 @@
 ''' Using flask to make an api '''
 # import necessary libraries and functions
-import uwsgidecorators
 import os
 import logging
 from flask import Flask, jsonify, request
 import helper
 from sys import stdout
-import requests
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.wsgi import OpenTelemetryMiddleware
 import json
+from ast import literal_eval
 from flask_sqlalchemy import SQLAlchemy
 
 
@@ -21,7 +20,6 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from pymongo import MongoClient
 from pandas import DataFrame
-import psycopg2
 from bson import json_util
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
@@ -35,7 +33,7 @@ consoleHandler.setFormatter(logFormatter)
 # logger.addHandler(consoleHandler)
 config = helper.read_config()
 
-ENABLE_TELEMETRY= eval(os.environ['ENABLE_TELEMETRY'])
+ENABLE_TELEMETRY= literal_eval(os.environ['ENABLE_TELEMETRY'])
 
 if ENABLE_TELEMETRY:
     logger.info('ENABLE_TELEMETRY=True, enabling tracing...')
@@ -98,7 +96,7 @@ def parse_json(data):
 def home():
     if(request.method == 'GET'):
         logger.info('sample log')
-        data = f"Hello scaffold from asd"
+        data = "Hello scaffold from asd"
         return jsonify({'data': data,'lambda-response': 'asd'})
     return jsonify({'request': 'POST'})
 
@@ -108,23 +106,21 @@ def pg_customer():
         logger.info('pg customer get')
         logger.info(print(request.query_string))
         customer_name = request.args.get('customer_name')
-        logger.info (f"querying postgres for customer: {customer_name}")
+        logger.info ("querying postgres for customer: %s", customer_name)
         customer = CustomersModel.query.filter_by(customer_name=customer_name).first()
         customer_info = {'customer_name': customer.customer_name,'customer_id': customer.customer_id}
         logger.info (customer_info)
         return(jsonify(customer_info))
-
-    else:
-        logger.info('pg customer post')
-        logger.info(request.form)
-        logger.info(request.json)
-        customer_name = request.json.get('customer_name')
-        logger.info (f"creating customer: {customer_name}")
-        new_customer = CustomersModel(name=customer_name)
-        db.session.add(new_customer)
-        db.session.commit()
-        logger.info(f"customer {customer_name} inserted")
-        return jsonify({'customer': customer_name,'status': 'inserted'})
+    logger.info('pg customer post')
+    logger.info(request.form)
+    logger.info(request.json)
+    customer_name = request.json.get('customer_name')
+    logger.info ("creating customer: %s" ,customer_name)
+    new_customer = CustomersModel(name=customer_name)
+    db.session.add(new_customer)
+    db.session.commit()
+    logger.info("customer %s inserted", customer_name)
+    return jsonify({'customer': customer_name,'status': 'inserted'})
 
 @app.route('/mongo/orders', methods = ['GET', 'POST'])
 def mongo_orders():
@@ -137,20 +133,19 @@ def mongo_orders():
         output = parse_json(items_df.to_dict())
         logger.info(output)
         return output
-    else:
-        dbname = get_database()
-        collection_name = dbname["orders"]
-        customer_id = request.json.get('customer_id')
-        product_name = request.json.get('product_name')
-        item = {
-        "customer_id" : customer_id,
-        "product_name" : product_name,
-        }
-        collection_name.insert_one(item)
-        logger.info(f"item {item} inserted")
-        output=parse_json(dict(item, status="inserted"))
-        logger.info(output)
-        return output
+    dbname = get_database()
+    collection_name = dbname["orders"]
+    customer_id = request.json.get('customer_id')
+    product_name = request.json.get('product_name')
+    item = {
+    "customer_id" : customer_id,
+    "product_name" : product_name,
+    }
+    collection_name.insert_one(item)
+    logger.info(f"item %s inserted", item)
+    output=parse_json(dict(item, status="inserted"))
+    logger.info(output)
+    return output
 
 @app.route('/home/<int:num>', methods = ['GET'])
 def disp(num):
