@@ -102,22 +102,6 @@ def home():
         return jsonify({'data': data,'lambda-response': 'asd'})
     return jsonify({'request': 'POST'})
 
-@app.route('/pg/table', methods = ['POST'])
-def pg_table():
-    if(request.method == 'POST'):
-        logger.info('pg post table')
-        cursor = conn.cursor()
-        command = """ CREATE TABLE customers (
-                customer_id SERIAL PRIMARY KEY,
-                customer_name VARCHAR(255) NOT NULL
-                )
-        """
-        cursor.execute(command)
-        cursor.close()
-        conn.commit()
-        return jsonify({'status': 'created'})
-    return jsonify({'request': 'POST'})
-
 @app.route('/pg/customer', methods = ['GET', 'POST'])
 def pg_customer():
     if(request.method == 'GET'):
