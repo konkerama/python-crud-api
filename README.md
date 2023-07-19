@@ -4,7 +4,7 @@
 - ivestigate proper flows in managing container image versions on gitops
 - Write github actions to implement CI:
   - test python Application
-  - autoincrement semver version
+  - autoincrement semver version (how to also do a github deployment)
   - automatically open pr when there is a new version??
 
 ## Environment Information
