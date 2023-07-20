@@ -17,7 +17,7 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
 
       - name: echo new tag
-        run: git checkout k8s-application/v1.2.3 || git checkout -b k8s-application/v1.2.3
+        run: git checkout k8s-application/v1.2.4 || git checkout -b k8s-application/v1.2.4
 
       - name: Initialize mandatory git config
         run: |
@@ -33,7 +33,7 @@ jobs:
           git pull
           git add . 
           git commit -m "new commit"
-          git push origin k8s-application/v1.2.3
+          git push origin k8s-application/v1.2.4
 
 
       - name: Initialize mandatory git config
@@ -41,4 +41,4 @@ jobs:
           echo "${{ secrets.GH_TOKEN }}" > .githubtoken
           gh auth login --with-token < .githubtoken
           rm .githubtoken
-          gh pr create --title "some title" --body "some body" --head "k8s-application/v1.2.3" --base main
+          gh pr create --title "some title" --body "some body" --head "k8s-application/v1.2.4" --base main
