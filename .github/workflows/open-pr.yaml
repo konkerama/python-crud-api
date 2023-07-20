@@ -30,6 +30,7 @@ jobs:
 
       - name: Initialize mandatory git config
         run: |
+          git pull
           git add . 
           git commit -m "new commit"
           git push origin k8s-application/v1.2.3
