@@ -168,7 +168,7 @@ jobs:
         with:
           valueFile: 'python-app/overlays/dev/app.yaml'
           propertyPath: 'spec.template.spec.containers[0].image'
-          value: $${{ github.repository }}:${{needs.identify_new_version.outputs.NEW_RELEASE}}
+          value: ${{ github.repository }}:${{needs.identify_new_version.outputs.NEW_RELEASE}}
           commitChange: false
 
       - name: commit and push changes
