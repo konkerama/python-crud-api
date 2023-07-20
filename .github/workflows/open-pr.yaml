@@ -1,0 +1,21 @@
+name: Open PR
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+jobs:
+  identify_new_version:
+    name: Identify New Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+          repository: konkerama/k8s-project
+          ref: 'k8s-application/v1.2.3'
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: echo new tag
+        run: ls
