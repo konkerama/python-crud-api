@@ -105,7 +105,7 @@ jobs:
         with:
           context: python
           push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-          tags: ${{ env.GITHUB_REPOSITORY }}:${{github.sha}}, ${{ env.GITHUB_REPOSITORY }}:${{needs.identify_new_version.outputs.NEW_RELEASE}}
+          tags: ${GITHUB_REPOSITORY}:${{github.sha}}, ${GITHUB_REPOSITORY}:${{needs.identify_new_version.outputs.NEW_RELEASE}}
           cache-from: type=gha
           cache-to: type=gha,mode=
           
