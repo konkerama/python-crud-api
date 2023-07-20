@@ -15,7 +15,7 @@ jobs:
           fetch-depth: '0'
           repository: konkerama/k8s-project
           ref: 'k8s-application/v1.2.3'
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: echo new tag
         run: ls
