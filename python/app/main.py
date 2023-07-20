@@ -109,7 +109,7 @@ def pg_customer():
         customer_name = request.args.get('customer_name')
         logger.info ("querying postgres for customer: %s", customer_name)
         customer = CustomersModel.query.filter_by(customer_name=customer_name).first()
-        customer_info = {'customer_name': customer.customer_name,'customer_id': customer.customer_i, 'api_version': 'v1'}
+        customer_info = {'customer_name': customer.customer_name,'customer_id': customer.customer_id, 'api_version': 'v1'}
         logger.info (customer_info)
         return(jsonify(customer_info))
     logger.info('pg customer post')
