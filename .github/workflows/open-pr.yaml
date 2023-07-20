@@ -17,7 +17,7 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
 
       - name: echo new tag
-        run: git checkout -b k8s-application/v1.2.3
+        run: git checkout k8s-application/v1.2.3 || git checkout -b k8s-application/v1.2.3
 
       - name: Initialize mandatory git config
         run: |
