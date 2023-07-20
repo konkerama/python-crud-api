@@ -151,7 +151,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: '0'
-          repository: ${{ github.actor }}/${{env.K8S_PROJECT}}
+          repository: ${{ github.actor }}/${{ vars.K8S_PROJECT }}
           token: ${{ secrets.GH_TOKEN }}
 
       - name: git checkout
