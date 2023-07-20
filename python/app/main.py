@@ -109,7 +109,7 @@ def pg_customer():
         customer_name = request.args.get('customer_name')
         logger.info ("querying postgres for customer: %s", customer_name)
         customer = CustomersModel.query.filter_by(customer_name=customer_name).first()
-        customer_info = {'customer_name': customer.customer_name,'customer_id': customer.customer_id}
+        customer_info = {'customer_name': customer.customer_name,'customer_id': customer.customer_i, 'api_version': 'v1'}
         logger.info (customer_info)
         return(jsonify(customer_info))
     logger.info('pg customer post')
@@ -121,7 +121,7 @@ def pg_customer():
     db.session.add(new_customer)
     db.session.commit()
     logger.info("customer %s inserted", customer_name)
-    return jsonify({'customer': customer_name,'status': 'inserted'})
+    return jsonify({'customer': customer_name,'status': 'inserted', 'api_version': 'v1'})
 
 @app.route('/mongo/orders', methods = ['GET', 'POST'])
 def mongo_orders():
