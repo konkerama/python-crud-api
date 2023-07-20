@@ -144,7 +144,7 @@ jobs:
           -d '{"tag_name":"${{ steps.taggerDryRun.outputs.new_tag }}","target_commitish":"main","name":"${{ steps.taggerDryRun.outputs.new_tag }}","body":"Description of the release","draft":false,"prerelease":false,"generate_release_notes":false}'
 
   open_pr:
-    name: Openting a PR to project repo
+    name: Opening a PR to project repo
     runs-on: ubuntu-latest
     needs: bump_up_version
     steps:
