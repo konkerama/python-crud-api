@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: '0'
           repository: konkerama/k8s-project
-          ref: 'k8s-application/v1.2.3'
+          # ref: 'k8s-application/v1.2.3'
           token: ${{ secrets.GH_TOKEN }}
 
       - name: echo new tag
