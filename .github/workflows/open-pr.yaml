@@ -26,7 +26,7 @@ jobs:
 
       - name: Initialize mandatory git config
         run: |
-          echo "asdf" > asdf
+          echo "asdf" >> asdf
 
       - name: Initialize mandatory git config
         run: |
