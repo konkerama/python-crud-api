@@ -5,10 +5,6 @@
   - test python Application
     - https://pypi.org/project/pytest-postgresql/
     - https://pypi.org/user/mdomke/
-  - automatically open pr when there is a new version??
-    - first use this to clone the project repo locally in ghactions: https://github.com/actions/checkout on a branch named k8s-application/x.x.x
-    - then use this to update yaml https://github.com/fjogeleit/yaml-update-action
-    - and then using the gh api to create a pr
 
 ## Environment Information
 

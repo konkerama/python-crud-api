@@ -183,4 +183,4 @@ jobs:
           echo "${{ secrets.GH_TOKEN }}" > .githubtoken
           gh auth login --with-token < .githubtoken
           rm .githubtoken
-          gh pr create --title "some title" --body "some body" --head "${{ github.event.repository.name }}/${{needs.identify_new_version.outputs.NEW_RELEASE}}" --base main
+          gh pr create --title "Deploy ${{ github.repository }}:${{needs.identify_new_version.outputs.NEW_RELEASE}} to dev" --body "Optional: add more info about the release" --head "${{ github.event.repository.name }}/${{needs.identify_new_version.outputs.NEW_RELEASE}}" --base main
