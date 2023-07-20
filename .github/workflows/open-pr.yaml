@@ -33,3 +33,8 @@ jobs:
           git add . 
           git commit -m "new commit"
           git push origin k8s-application/v1.2.3
+
+
+      - name: Initialize mandatory git config
+        run: |
+          gh pr create --title "some title" --body "some body" --head "k8s-application/v1.2.3" --base main
