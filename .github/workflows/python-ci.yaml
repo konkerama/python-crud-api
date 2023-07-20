@@ -156,7 +156,7 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
 
       - name: git checkout
-        run: git checkout ${{ github.event.repository.name }}/${{ steps.taggerDryRun.outputs.new_tag }} || git checkout -b ${{ github.event.repository.name }}/${{ steps.taggerDryRun.outputs.new_tag }}
+        run: git checkout ${{ github.event.repository.name }}/${{needs.identify_new_version.outputs.NEW_RELEASE}} || git checkout -b ${{ github.event.repository.name }}/${{needs.identify_new_version.outputs.NEW_RELEASE}}
 
       - name: initialize mandatory git config
         run: |
@@ -168,14 +168,14 @@ jobs:
         with:
           valueFile: 'python-app/overlays/dev/app.yaml'
           propertyPath: 'spec.template.spec.containers[0].image'
-          value: $${{ github.repository }}:${{ steps.taggerDryRun.outputs.new_tag }}
+          value: $${{ github.repository }}:${{needs.identify_new_version.outputs.NEW_RELEASE}}
           commitChange: false
 
       - name: commit and push changes
         run: |
           git add . 
           git commit -m "new commit"
-          git push origin ${{ github.event.repository.name }}/${{ steps.taggerDryRun.outputs.new_tag }}
+          git push origin ${{ github.event.repository.name }}/${{needs.identify_new_version.outputs.NEW_RELEASE}}
 
 
       - name: create pr
@@ -183,4 +183,4 @@ jobs:
           echo "${{ secrets.GH_TOKEN }}" > .githubtoken
           gh auth login --with-token < .githubtoken
           rm .githubtoken
-          gh pr create --title "some title" --body "some body" --head "${{ github.event.repository.name }}/${{ steps.taggerDryRun.outputs.new_tag }}" --base main
+          gh pr create --title "some title" --body "some body" --head "${{ github.event.repository.name }}/${{needs.identify_new_version.outputs.NEW_RELEASE}}" --base main
