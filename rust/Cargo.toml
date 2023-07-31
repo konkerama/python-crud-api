@@ -1,0 +1,13 @@
+[package]
+name = "rust-crud"
+version = "0.1.0"
+authors = ["Konstantinos Keramaris <konkeramaris@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+chrono = { version = "0.4.26", features = ["serde"] }
+pretty_env_logger = "0.5.0"
+serde = { version = "1.0.179", features = ["derive"] }
+tokio = { version = "1.29.1", features = ["full"] }
+uuid = { version = "1.4.1", features = ["v4"] }
+warp = "0.3.5"
