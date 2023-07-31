@@ -1,7 +1,8 @@
 import os
 import configparser
 
-ENV = os.environ['ENV']
+# ENV = os.environ['ENV']
+ENV="dev"
 
 # Method to read config file settings
 def read_config():
