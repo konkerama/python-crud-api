@@ -7,19 +7,24 @@ status:
 todo:
 
 - implement crud
-- connect to mongodb
 - connect to postgres
-- logging?
 - tracing using opentelemetry
 - testing
 
+## mongo db
+https://codevoweb.com/build-a-crud-api-with-rust-and-mongodb/
 
-curl -X POST http://localhost:8000/api/todos -d '{"title": "Build a Simple CRUD API in Rust","content": "This tutorial is the best"}' -H "Content-Type: application/json"
+create
+curl -X POST http://localhost:8000/api/notes -d '{"id": "123","title": "asdads","content": "String","category": "Category"}' -H "Content-Type: application/json" -s | jq
 
+list
+curl http://localhost:8000/api/notes/ -s | jq
 
-curl -X PATCH http://localhost:8000/api/todos/1f483e31-c1a6-4721-a967-779b5ff0b7b5 -d '{"title": "The new title of the Todo item","completed": true}' -H "Content-Type: application/json"
+get
+curl http://localhost:8000/api/notes/64ca59ece626c213c8d393c7 -s | jq
 
+delete
+curl -X DELETE http://localhost:8000/api/notes/64ca59ece626c213c8d393c7 -s | jq
 
-curl http://localhost:8000/api/todos/1f483e31-c1a6-4721-a967-779b5ff0b7b5 -s | jq
-
-curl http://localhost:8000/api/todos?page=1&limit=10 -s | jq
+patch
+curl -X PATCH http://localhost:8000/api/notes/64ca59ece626c213c8d393c7~ -d '{"title": "newasdads","content": "String","category": "Category"}' -H "Content-Type: application/json"

@@ -20,6 +20,7 @@ async fn main() -> Result<()> {
         std::env::set_var("RUST_LOG", "api=info");
     }
     pretty_env_logger::init();
+    // todo remove this
     dotenv().ok();
     let db = DB::init().await?;
 
@@ -29,11 +30,13 @@ async fn main() -> Result<()> {
         .allow_headers(vec!["content-type"])
         .allow_credentials(true);
 
-    let note_router = warp::path!("api" / "notes");
-    let note_router_id = warp::path!("api" / "notes" / String);
-    let health_checker = warp::path!("api" / "healthchecker")
-        .and(warp::get())
-        .and_then(handler::health_checker_handler);
+    let note_router = 
+        warp::path!("api" / "notes");
+    let note_router_id = 
+        warp::path!("api" / "notes" / String);
+    let health_checker = 
+        warp::path!("api" / "healthchecker").and(warp::get())
+                                            .and_then(handler::health_checker_handler);
 
     let note_routes = note_router
         .and(warp::post())
