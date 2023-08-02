@@ -1,35 +1,18 @@
 use chrono::prelude::*;
+use mongodb::bson::{self, oid::ObjectId};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 #[allow(non_snake_case)]
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Todo {
-    pub id: Option<String>,
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NoteModel {
+    #[serde(rename = "_id")]
+    pub id: ObjectId,
     pub title: String,
     pub content: String,
-    pub completed: Option<bool>,
-    pub createdAt: Option<DateTime<Utc>>,
-    pub updatedAt: Option<DateTime<Utc>>,
-}
-
-pub type DB = Arc<Mutex<Vec<Todo>>>;
-
-pub fn todo_db() -> DB {
-    Arc::new(Mutex::new(Vec::new()))
-}
-
-#[derive(Debug, Deserialize)]
-pub struct QueryOptions {
-    pub page: Option<usize>,
-    pub limit: Option<usize>,
-}
-
-#[allow(non_snake_case)]
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct UpdateTodoSchema {
-    pub title: Option<String>,
-    pub content: Option<String>,
-    pub completed: Option<bool>,
+    pub category: Option<String>,
+    pub published: Option<bool>,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    pub createdAt: DateTime<Utc>,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    pub updatedAt: DateTime<Utc>,
 }
