@@ -36,3 +36,22 @@ pub struct NoteListResponse {
     pub results: usize,
     pub notes: Vec<NoteResponse>,
 }
+
+
+#[allow(non_snake_case)]
+#[derive(Serialize, Debug)]
+pub struct CustomerResponse {
+    pub customer_name: String,
+    pub customer_surname: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CustomerData {
+    pub customer: CustomerResponse,
+}
+
+#[derive(Serialize, Debug)]
+pub struct SingleCustomerResponse {
+    pub status: String,
+    pub data: CustomerData,
+}

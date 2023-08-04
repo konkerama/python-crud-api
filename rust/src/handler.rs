@@ -1,11 +1,16 @@
 use crate::{
     db::DB,
+    pg::PgDB,
     response::GenericResponse,
     schema::UpdateNoteSchema,
-    schema::{CreateNoteSchema, FilterOptions},
+    schema::{CreateNoteSchema, FilterOptions, CreateCustomerSchema},
     WebResult,
 };
 use warp::{http::StatusCode, reject, reply::json, reply::with_status, Reply};
+use diesel::pg::PgConnection;
+use diesel::r2d2::{ConnectionManager, Pool};
+type PgPool = Pool<ConnectionManager<PgConnection>>;
+
 
 pub async fn health_checker_handler() -> WebResult<impl Reply> {
     const MESSAGE: &str = "Build CRUD API with Rust and MongoDB";
@@ -85,4 +90,22 @@ pub async fn delete_note_handler(id: String, db: DB) -> WebResult<impl Reply> {
     }
 
     Ok(with_status(json(&""), StatusCode::NO_CONTENT))
+}
+
+// pub async fn customer_list_handler(opts: FilterOptions, db: PgDB) -> WebResult<impl Reply> {
+//     let limit = opts.limit.unwrap_or(10) as i64;
+//     let page = opts.page.unwrap_or(1) as i64;
+
+//     let result_json = db
+//         .fetch_customer(limit, page)
+//         .await
+//         .map_err(|e| reject::custom(e))?;
+
+//     Ok(json(&result_json))
+// }
+
+pub async fn create_customer_handler(body: CreateCustomerSchema, mut db: PgPool) -> WebResult<impl Reply> {
+    let note = db.create_customer(&body).await.map_err(|e| reject::custom(e))?;
+
+    Ok(with_status(json(&note), StatusCode::CREATED))
 }

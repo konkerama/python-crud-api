@@ -1,6 +1,6 @@
 use crate::response::{NoteData, NoteListResponse, NoteResponse, SingleNoteResponse};
 use crate::{
-    error::Error::*, model::NoteModel, schema::CreateNoteSchema, schema::UpdateNoteSchema, Result,
+    error::Error::*, model::NoteModel, schema::CreateNoteSchema, schema::UpdateNoteSchema, Result
 };
 use chrono::prelude::*;
 use futures::StreamExt;
@@ -224,3 +224,100 @@ impl DB {
         Ok(note_response)
     }
 }
+
+// #[derive(Clone, Debug)]
+// pub struct  PgDB{
+//     pub client: PgClient
+// }
+
+// impl PgDB{
+//     pub async fn init() -> Result<Self> { 
+//         let pg_username: String = 
+//             std::env::var("POSTGRES_USER").expect("POSTGRES_USER must be set.");
+//         let pg_passwd: String = 
+//             std::env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set.");
+//         let pg_db: String = 
+//             std::env::var("POSTGRES_DB").expect("POSTGRES_DB must be set.");
+//         let pg_domain: String = 
+//             std::env::var("POSTGRES_URL").expect("POSTGRES_URL must be set.");
+//         let pg_uri = 
+//             format!("postgresql://{}:{}@{}:5243/{}", pg_username, pg_passwd,pg_domain, pg_db);
+
+//         let client = PgClient::connect(&pg_uri,NoTls).unwrap();
+
+//         println!("✅ Database connected successfully");
+
+//         Ok(Self {
+//             client
+//         })
+//     } 
+
+//     // pub async fn fetch_customer(&self, limit: i64, page: i64) -> Result<NoteListResponse> {
+//     //     let find_options = FindOptions::builder()
+//     //         .limit(limit)
+//     //         .skip(u64::try_from((page - 1) * limit).unwrap())
+//     //         .build();
+
+//     //     let mut cursor = self
+//     //         .note_collection
+//     //         .find(None, find_options)
+//     //         .await
+//     //         .map_err(MongoQueryError)?;
+
+//     //     let mut json_result: Vec<NoteResponse> = Vec::new();
+//     //     while let Some(doc) = cursor.next().await {
+//     //         json_result.push(self.doc_to_note(&doc.unwrap())?);
+//     //     }
+
+//     //     let json_note_list = NoteListResponse {
+//     //         status: "success".to_string(),
+//     //         results: json_result.len(),
+//     //         notes: json_result,
+//     //     };
+
+//     //     Ok(json_note_list)
+//     // }
+
+//     pub async fn create_customer(&mut self, body: &CreateCustomerSchema) -> Result<Option<SingleCustomerResponse>> {
+//         let customer_name = body.customer_name.to_owned();
+//         let customer_surname = body.customer_surname.to_owned();
+
+//         self.client.batch_execute(
+//             "
+//             CREATE TABLE IF NOT EXISTS customers (
+//                 customer_name              VARCHAR PRIMARY KEY,
+//                 customer_surname        VARCHAR UNIQUE NOT NULL,
+//                 )
+//         ",
+//         );
+
+//         self.client.execute(
+//             "INSERT INTO customers (customer_name, customer_surname) VALUES ($1, $2)",
+//             &[&customer_name, &customer_surname],
+//         );
+
+//         let customer = CustomerResponse{
+//             customer_name:customer_name,
+//             customer_surname:customer_surname
+//         };
+
+//         let customer_response = SingleCustomerResponse {
+//             status: "success".to_string(),
+//             data: CustomerData {
+//                 customer: customer,
+//             },
+//         };
+
+//         Ok(Some(customer_response))
+//     }
+
+//     fn doc_to_note(&self, note: &CustomerModel) -> Result<CustomerResponse> {
+//         let customer_response = CustomerResponse {
+//             customer_name: note.customer_name.to_owned(),
+//             customer_surname: note.customer_surname.to_owned(),
+//         };
+
+//         Ok(customer_response)
+//     }
+
+// }

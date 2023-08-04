@@ -32,3 +32,9 @@ pub struct UpdateNoteSchema {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub published: Option<bool>,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CreateCustomerSchema {
+    pub customer_name: String,
+    pub customer_surname: String
+}
