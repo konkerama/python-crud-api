@@ -36,3 +36,10 @@ pub struct NoteListResponse {
     pub results: usize,
     pub notes: Vec<NoteResponse>,
 }
+
+#[derive(Serialize, Debug)]
+pub struct CustResponse {
+    pub status: String,
+    pub name: String,
+}
+

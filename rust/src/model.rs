@@ -1,6 +1,7 @@
 use chrono::prelude::*;
 use mongodb::bson::{self, oid::ObjectId};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -16,3 +17,11 @@ pub struct NoteModel {
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     pub updatedAt: DateTime<Utc>,
 }
+
+#[allow(non_snake_case)]
+#[derive(Debug, FromRow, Deserialize, Serialize)]
+pub struct CustModel {
+    pub customer_name: Option<String>,
+    pub customer_surname: Option<String>,
+}
+

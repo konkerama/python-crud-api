@@ -11,6 +11,7 @@ futures = { version = "0.3.25", default-features = false, features = ["async-awa
 mongodb = { version = "2.3.1", features = ["bson-chrono-0_4"] }
 pretty_env_logger = "0.4.0"
 serde = { version = "1.0.152", features = ["derive"] }
+sqlx = {version="0.7.1", features = ["runtime-async-std-native-tls", "postgres", "uuid", "chrono"]}
 thiserror = "1.0.38"
 tokio = { version = "1.23.0", features = ["full"] }
 warp = "0.3.3"

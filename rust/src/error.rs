@@ -81,7 +81,8 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<Box<dyn Rep
                 status = "fail";
                 code = StatusCode::BAD_REQUEST;
                 message = e.as_str();
-            } // _ => {
+            }
+             // _ => {
               //     eprintln!("unhandled application error: {:?}", err);
               //     status = "error";
               //     code = StatusCode::INTERNAL_SERVER_ERROR;
