@@ -9,6 +9,8 @@ use crate::response::GenericResponse;
 pub enum Error {
     #[error("mongodb error: {0}")]
     MongoError(#[from] mongodb::error::Error),
+    #[error("sqlx error: {0}")]
+    SqlxError(sqlx::Error),
     #[error("error during mongodb query: {0}")]
     MongoQueryError(mongodb::error::Error),
     #[error("dulicate key error occurred: {0}")]
@@ -46,6 +48,12 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<Box<dyn Rep
                 code = StatusCode::INTERNAL_SERVER_ERROR;
                 message = "MongoDB error";
             }
+            Error::SqlxError(e) => {
+                eprintln!("sqlx error: {:?}", e);
+                status = "fail";
+                code = StatusCode::BAD_REQUEST;
+                message = "sqlx error";
+            }
             Error::MongoDuplicateError(e) => {
                 eprintln!("MongoDB error: {:?}", e);
                 status = "fail";
@@ -64,12 +72,6 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<Box<dyn Rep
                 code = StatusCode::INTERNAL_SERVER_ERROR;
                 message = "Error seserializing BSON";
             }
-            // Error::MongoDeserializeBsonError(e) => {
-            //     eprintln!("Error deserializing BSON: {:?}", e);
-            //     status = "fail";
-            //     code = StatusCode::INTERNAL_SERVER_ERROR;
-            //     message = "Error deserializing BSON";
-            // }
             Error::MongoDataError(e) => {
                 eprintln!("validation error: {:?}", e);
                 status = "fail";

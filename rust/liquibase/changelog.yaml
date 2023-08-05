@@ -1,0 +1,15 @@
+databaseChangeLog:
+- changeSet:
+    id: 1689337429090-1
+    author: kostas (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            name: customer_name
+            type: VARCHAR
+        - column:
+            name: customer_surname
+            type: VARCHAR
+        tableName: customer
+

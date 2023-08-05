@@ -11,6 +11,21 @@ todo:
 - tracing using opentelemetry
 - testing
 
+## Commands
+
+``` bash
+# prepare
+./prepare
+
+# build and run
+docker compose up --build --force-recreate -V
+
+# optionally to clean up everything
+docker compose down
+
+```
+
+
 https://codevoweb.com/build-a-simple-api-in-rust/
 
 ## mongo db
@@ -46,3 +61,5 @@ https://github.com/zupzup/warp-postgres-example/blob/main/src/db.rs
 https://www.reddit.com/r/rust/comments/goafhk/right_approach_to_use_postgres_with_warp/
 https://blog.logrocket.com/async-crud-web-service-rust-warp/
 https://stackoverflow.com/questions/61945533/how-do-i-use-tokio-postgres-with-warp
+
+curl -X POST http://localhost:8000/api/pg -d '{"customer_name": "paul","customer_surname": "doe"}' -H "Content-Type: application/json" -s | jq

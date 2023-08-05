@@ -7,7 +7,7 @@ services:
       # dockerfile: Dockerfile
     depends_on:
       - mongodb
-    #   - postgres
+      - liquibase
     # image: sample-python-container:latest
     ports:
       - 8000:8000
@@ -23,6 +23,20 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=mydb
       - POSTGRES_URL=postgres
+  liquibase:
+    depends_on:
+      - postgres
+    image: liquibase/liquibase:latest
+    command: ["liquibase", "update", "--changeLogFile=changelog/changelog.yaml"]
+    ports:
+      - 8082:80
+    environment: 
+      - LIQUIBASE_LOG_LEVEL=fine
+      - LIQUIBASE_COMMAND_URL=jdbc:postgresql://postgres:5432/postgres?autoReconnect=true&useSSL=false
+      - LIQUIBASE_COMMAND_USERNAME=postgres
+      - LIQUIBASE_COMMAND_PASSWORD=postgres
+    volumes:
+      - ./liquibase:/liquibase/changelog    
   mongodb:
     image: mongo
     ports:
@@ -40,14 +54,14 @@ services:
       - ME_CONFIG_MONGODB_ADMINUSERNAME=username
       - ME_CONFIG_MONGODB_ADMINPASSWORD=password
       - ME_CONFIG_MONGODB_SERVER=mongodb
-  # postgres:
-  #   image: postgres
-  #   ports:
-  #     - 5432:5432
-  #   environment: 
-  #     - POSTGRES_USER=username
-  #     - POSTGRES_PASSWORD=password
-  #     - POSTGRES_DB=mydb
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    environment: 
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
   # pgadmin:
   #   image: dpage/pgadmin4
   #   ports:

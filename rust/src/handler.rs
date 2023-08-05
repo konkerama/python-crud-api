@@ -1,15 +1,12 @@
 use crate::{
     db::DB,
-    response::{GenericResponse,CustResponse},
+    pg::PG,
+    response::GenericResponse,
     schema::UpdateNoteSchema,
-    schema::{CreateNoteSchema, FilterOptions},
-    model::CustModel,
+    schema::{CreateNoteSchema, CreateCustSchema, FilterOptions},
     WebResult,
 };
 use warp::{http::StatusCode, reject, reply::json, reply::with_status, Reply};
-use sqlx::{Pool, Postgres};
-
-
 
 pub async fn health_checker_handler() -> WebResult<impl Reply> {
     const MESSAGE: &str = "Build CRUD API with Rust and MongoDB";
@@ -91,9 +88,12 @@ pub async fn delete_note_handler(id: String, db: DB) -> WebResult<impl Reply> {
     Ok(with_status(json(&""), StatusCode::NO_CONTENT))
 }
 
-pub async fn pg_handler(db: Pool<Postgres>) -> WebResult<impl Reply> {
-    let limit=10;
-    let offset=1;
+pub async fn pg_handler(body: CreateCustSchema, db: PG) -> WebResult<impl Reply> {
+    println!("pre postgres call");
+    let result = db.create_customer(&body).await.map_err(|e| reject::custom(e))?;
+    println!("post postgres call");
+    // let limit=10;
+    // let offset=1;
     // let query_result = sqlx::query_as!(
     //     CustModel,
     //     "SELECT * FROM customer ORDER by customer_name LIMIT $1 OFFSET $2",
@@ -102,26 +102,8 @@ pub async fn pg_handler(db: Pool<Postgres>) -> WebResult<impl Reply> {
     // )
     // .fetch_all(&db)
     // .await;
-    let name="mark";
+    // let name="mark";
 
-    println!("pg");
+    Ok(with_status(json(&result), StatusCode::CREATED))
 
-    unsafe{
-        let query_result = sqlx::query_as!(
-            CustModel,
-            "INSERT INTO customer (customer_name,customer_surname) VALUES ($1, $2) RETURNING *",
-            name.to_string(),
-            name.to_string(),
-        )
-        .fetch_all(&db)
-        .await;
-    }
-
-    let json_note_list = CustResponse {
-        status: "success".to_string(),
-        name: "success".to_string(),
-    };
-
-
-    Ok(json(&json_note_list))
 }
