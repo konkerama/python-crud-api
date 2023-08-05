@@ -3,7 +3,7 @@ use crate::{
     pg::PG,
     response::GenericResponse,
     schema::UpdateNoteSchema,
-    schema::{CreateNoteSchema, CreateCustSchema, FilterOptions},
+    schema::{CreateNoteSchema, CreateCustomerSchema, FilterOptions},
     WebResult,
 };
 use warp::{http::StatusCode, reject, reply::json, reply::with_status, Reply};
@@ -88,22 +88,29 @@ pub async fn delete_note_handler(id: String, db: DB) -> WebResult<impl Reply> {
     Ok(with_status(json(&""), StatusCode::NO_CONTENT))
 }
 
-pub async fn pg_handler(body: CreateCustSchema, db: PG) -> WebResult<impl Reply> {
-    println!("pre postgres call");
+// POST /api/pg
+pub async fn create_customer_handler(body: CreateCustomerSchema, db: PG) -> WebResult<impl Reply> {
     let result = db.create_customer(&body).await.map_err(|e| reject::custom(e))?;
-    println!("post postgres call");
-    // let limit=10;
-    // let offset=1;
-    // let query_result = sqlx::query_as!(
-    //     CustModel,
-    //     "SELECT * FROM customer ORDER by customer_name LIMIT $1 OFFSET $2",
-    //     limit as i32,
-    //     offset as i32
-    // )
-    // .fetch_all(&db)
-    // .await;
-    // let name="mark";
+
 
     Ok(with_status(json(&result), StatusCode::CREATED))
+
+}
+
+// GET /api/pg
+pub async fn list_customer_handler(opts: FilterOptions, db: PG) -> WebResult<impl Reply> {
+    let limit = opts.limit.unwrap_or(10) as i64;
+    let offset = opts.page.unwrap_or(1) as i64;
+    let result = db.list_customers(limit, offset).await.map_err(|e| reject::custom(e))?;
+
+    Ok(with_status(json(&result), StatusCode::CREATED))
+
+}
+
+// GET /api/pg/<customer-name>
+pub async fn get_customer_handler(id: String, db: PG) -> WebResult<impl Reply> {
+    let result = db.get_customer(&id).await.map_err(|e| reject::custom(e))?;
+
+    Ok(with_status(json(&result), StatusCode::OK))
 
 }

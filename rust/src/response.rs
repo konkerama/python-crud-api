@@ -38,8 +38,21 @@ pub struct NoteListResponse {
 }
 
 #[derive(Serialize, Debug)]
-pub struct CustResponse {
-    pub status: String,
+pub struct CustomerResponse {
     pub name: String,
+    pub surname: String,
 }
 
+#[derive(Serialize, Debug)]
+
+pub struct CustomerListResponse {
+    pub status: String,
+    pub data: Vec<CustomerResponse>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct SingleCustomerResponse {
+    pub status: String,
+    pub name: String,
+    pub surname: String,
+}

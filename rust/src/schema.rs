@@ -35,7 +35,7 @@ pub struct UpdateNoteSchema {
 
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CreateCustSchema {
+pub struct CreateCustomerSchema {
     pub customer_name: String,
     pub customer_surname: String,
 }

@@ -1,6 +1,6 @@
-use crate::response::CustResponse;
+use crate::response::{CustomerResponse, SingleCustomerResponse, CustomerListResponse};
 use crate::{
-    error::Error::*, model::CustModel, schema::CreateCustSchema, Result,
+    error::Error::*, model::CustomerModel, schema::CreateCustomerSchema, Result,
 };
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
@@ -27,24 +27,17 @@ impl PG {
             }
         };
 
-        let _query_result = sqlx::query!(
-            "CREATE TABLE IF NOT EXISTS customer (customer_name varchar,customer_surname varchar)"
-            )
-            .execute(&pool.clone())
-            .await
-            .map_err(SqlxError)?;
-
         Ok(Self {
             pool,
         })
     }
 
-    pub async fn create_customer(&self, body: &CreateCustSchema) -> Result<Option<CustResponse>> {
+    pub async fn create_customer(&self, body: &CreateCustomerSchema) -> Result<Option<SingleCustomerResponse>> {
         let name = body.customer_name.to_owned();
         let surname = body.customer_surname.to_owned();
 
         let query_result = sqlx::query_as!(
-            CustModel,
+            CustomerModel,
             "INSERT INTO customer (customer_name,customer_surname) VALUES ($1, $2) RETURNING *",
             name,
             surname,
@@ -53,25 +46,68 @@ impl PG {
         .await
         .map_err(SqlxError)?;
 
-        let cust_response = CustResponse {
+        let customer_response = SingleCustomerResponse {
             name: query_result.customer_name.unwrap_or("john doe".to_string()),
+            surname: query_result.customer_surname.unwrap_or("doe".to_string()),
             status: "success".to_string(),
         };
 
-        Ok(Some(cust_response))
+        Ok(Some(customer_response))
     }
 
-    // fn doc_to_note(&self, note: &NoteModel) -> Result<NoteResponse> {
-    //     let note_response = NoteResponse {
-    //         id: note.id.to_hex(),
-    //         title: note.title.to_owned(),
-    //         content: note.content.to_owned(),
-    //         category: note.category.to_owned().unwrap(),
-    //         published: note.published.unwrap(),
-    //         createdAt: note.createdAt,
-    //         updatedAt: note.updatedAt,
-    //     };
+    pub async fn list_customers(&self, limit: i64, offset: i64) -> Result<Option<CustomerListResponse>> {
 
-    //     Ok(note_response)
-    // }
+        let query_result = sqlx::query_as!(
+            CustomerModel,
+            "SELECT * FROM customer ORDER by customer_name LIMIT $1 OFFSET $2",
+            limit as i32,
+            offset as i32
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(SqlxError)?;
+
+        println!("{:?}", query_result);
+
+        let mut json_result: Vec<CustomerResponse> = Vec::new();
+        for customer in query_result {
+            json_result.push(self.model_to_result(&customer).unwrap());
+        }
+
+        let customer_response = CustomerListResponse {
+            status: "success".to_string(),
+            data: json_result
+        };
+
+        Ok(Some(customer_response))
+    }
+
+    pub async fn get_customer(&self, id: &String) -> Result<Option<SingleCustomerResponse>> {
+        let query_result = sqlx::query_as!(
+            CustomerModel,
+            "SELECT * FROM customer WHERE customer_name=$1",
+            id,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(SqlxError)?;
+
+        let customer_response = SingleCustomerResponse {
+            name: query_result.customer_name.unwrap_or("john".to_string()),
+            surname: query_result.customer_surname.unwrap_or("doe".to_string()),
+            status: "success".to_string(),
+        };
+
+        Ok(Some(customer_response))
+    }
+
+    fn model_to_result(&self, customer: &CustomerModel) -> Result<CustomerResponse> {
+        let customer_response = CustomerResponse {
+            name: customer.customer_name.to_owned().unwrap(),
+            surname: customer.customer_surname.to_owned().unwrap(),
+        };
+
+        Ok(customer_response)
+    }
+
 }

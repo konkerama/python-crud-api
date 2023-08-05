@@ -66,35 +66,33 @@ async fn main() -> Result<()> {
             .and(with_db(db.clone()))
             .and_then(handler::delete_note_handler));
 
-    // let database_url = "postgresql://postgres:postgres@localhost:5432/postgres";
-    // let pool = match PgPoolOptions::new()
-    //     .max_connections(10)
-    //     .connect(&database_url)
-    //     .await
-    // {
-    //     Ok(pool) => {
-    //         println!("✅Connection to the database is successful!");
-    //         pool
-    //     }
-    //     Err(err) => {
-    //         println!("🔥 Failed to connect to the database: {:?}", err);
-    //         std::process::exit(1);
-    //     }
-    // };
-
     let pg_router = 
         warp::path!("api" / "pg");
+    let pg_router_id = 
+        warp::path!("api" / "pg" / String);
 
     let pg_routes = pg_router
         .and(warp::post())
         .and(warp::body::json())
         .and(with_pg(pg.clone()))
-        .and_then(handler::pg_handler);
+        .and_then(handler::create_customer_handler)
+        .or(pg_router
+            .and(warp::get())
+            .and(warp::query::<FilterOptions>())
+            .and(with_pg(pg.clone()))
+            .and_then(handler::list_customer_handler));
+
+
+    let pg_routes_id = pg_router_id
+        .and(warp::get())
+        .and(with_pg(pg.clone()))
+        .and_then(handler::get_customer_handler);
 
     let routes = note_routes
         .or(note_routes_id)
         .or(health_checker)
         .or(pg_routes)
+        .or(pg_routes_id)
         .with(cors)
         .recover(error::handle_rejection)
         .with(warp::log("api"));

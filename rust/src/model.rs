@@ -20,7 +20,7 @@ pub struct NoteModel {
 
 #[allow(non_snake_case)]
 #[derive(Debug, FromRow, Deserialize, Serialize)]
-pub struct CustModel {
+pub struct CustomerModel {
     pub customer_name: Option<String>,
     pub customer_surname: Option<String>,
 }

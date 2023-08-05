@@ -7,7 +7,6 @@ status:
 todo:
 
 - implement crud
-- connect to postgres
 - tracing using opentelemetry
 - testing
 
@@ -22,6 +21,13 @@ docker compose up --build --force-recreate -V
 
 # optionally to clean up everything
 docker compose down
+
+# create customer
+curl -X POST http://localhost:8000/api/pg -d '{"customer_name": "paul","customer_surname": "doe"}' -H "Content-Type: application/json" -s | jq
+
+# get customer
+curl http://localhost:8000/api/pg/mark -s | jq
+
 
 ```
 
