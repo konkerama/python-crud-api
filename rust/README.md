@@ -10,6 +10,13 @@ todo:
 - tracing using opentelemetry
 - testing
 
+axum todo:
+- read doc
+- implement full postgres crud
+- tests error messages that are properly working and sending correct feedback back to the client
+- proper logging
+
+
 ## Commands
 
 ``` bash
@@ -27,6 +34,9 @@ curl -X POST http://localhost:8000/api/pg -d '{"customer_name": "paul","customer
 
 # get customer
 curl http://localhost:8000/api/pg/mark -s | jq
+
+# list 
+curl http://localhost:8000/api/pg -s | jq
 
 
 ```
@@ -69,3 +79,16 @@ https://blog.logrocket.com/async-crud-web-service-rust-warp/
 https://stackoverflow.com/questions/61945533/how-do-i-use-tokio-postgres-with-warp
 
 curl -X POST http://localhost:8000/api/pg -d '{"customer_name": "paul","customer_surname": "doe"}' -H "Content-Type: application/json" -s | jq
+
+
+## axum
+- https://github.com/davidpdrsn/realworld-axum-sqlx/tree/main
+- https://blog.logrocket.com/rust-axum-error-handling/
+- https://github.com/tokio-rs/axum/blob/main/examples/global-404-handler/src/main.rs
+- https://github.com/tokio-rs/axum/blob/main/examples/anyhow-error-response/src/main.rs
+- https://github.com/tokio-rs/axum/blob/main/examples/error-handling-and-dependency-injection/src/main.rs
+- https://carlosmv.hashnode.dev/getting-started-with-axum-rust
+- https://github.com/carlosm27/blog/blob/main/axum_crud_api/src/errors.rs
+- https://github.com/carlosm27/blog/blob/main/axum_crud_api/src/controllers/task.rs
+- https://github.com/wpcodevo/simple-api-rust-axum/tree/master
+- https://github.com/tokio-rs/axum

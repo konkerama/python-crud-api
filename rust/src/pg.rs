@@ -1,8 +1,9 @@
 use crate::response::{CustomerResponse, SingleCustomerResponse, CustomerListResponse};
 use crate::{
-    error::Error::*, model::CustomerModel, schema::CreateCustomerSchema, Result,
+    model::CustomerModel, schema::CreateCustomerSchema,
 };
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use crate::{Error, Result};
 
 #[derive(Clone, Debug)]
 pub struct PG {
@@ -11,7 +12,7 @@ pub struct PG {
 
 impl PG {
     pub async fn init() -> Result<Self> { 
-        let database_url = "postgresql://postgres:postgres@postgres:5432/postgres";
+        let database_url = "postgresql://postgres:postgres@localhost:5432/postgres";
         let pool = match PgPoolOptions::new()
             .max_connections(10)
             .connect(&database_url)
@@ -32,7 +33,7 @@ impl PG {
         })
     }
 
-    pub async fn create_customer(&self, body: &CreateCustomerSchema) -> Result<Option<SingleCustomerResponse>> {
+    pub async fn create_customer(&self, body: &CreateCustomerSchema) -> Result<SingleCustomerResponse> {
         let name = body.customer_name.to_owned();
         let surname = body.customer_surname.to_owned();
 
@@ -43,8 +44,7 @@ impl PG {
             surname,
         )
         .fetch_one(&self.pool)
-        .await
-        .map_err(SqlxError)?;
+        .await.unwrap();
 
         let customer_response = SingleCustomerResponse {
             name: query_result.customer_name.unwrap_or("john doe".to_string()),
@@ -52,7 +52,7 @@ impl PG {
             status: "success".to_string(),
         };
 
-        Ok(Some(customer_response))
+        Ok(customer_response)
     }
 
     pub async fn list_customers(&self, limit: i64, offset: i64) -> Result<Option<CustomerListResponse>> {
@@ -65,7 +65,7 @@ impl PG {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(SqlxError)?;
+        .map_err(|e|{Error::LoginFail})?;
 
         println!("{:?}", query_result);
 
@@ -82,24 +82,24 @@ impl PG {
         Ok(Some(customer_response))
     }
 
-    pub async fn get_customer(&self, id: &String) -> Result<Option<SingleCustomerResponse>> {
-        let query_result = sqlx::query_as!(
-            CustomerModel,
-            "SELECT * FROM customer WHERE customer_name=$1",
-            id,
-        )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(SqlxError)?;
+    // pub async fn get_customer(&self, id: &String) -> Result<Option<SingleCustomerResponse>> {
+    //     let query_result = sqlx::query_as!(
+    //         CustomerModel,
+    //         "SELECT * FROM customer WHERE customer_name=$1",
+    //         id,
+    //     )
+    //     .fetch_one(&self.pool)
+    //     .await
+    //     .map_err(SqlxError)?;
 
-        let customer_response = SingleCustomerResponse {
-            name: query_result.customer_name.unwrap_or("john".to_string()),
-            surname: query_result.customer_surname.unwrap_or("doe".to_string()),
-            status: "success".to_string(),
-        };
+    //     let customer_response = SingleCustomerResponse {
+    //         name: query_result.customer_name.unwrap_or("john".to_string()),
+    //         surname: query_result.customer_surname.unwrap_or("doe".to_string()),
+    //         status: "success".to_string(),
+    //     };
 
-        Ok(Some(customer_response))
-    }
+    //     Ok(Some(customer_response))
+    // }
 
     fn model_to_result(&self, customer: &CustomerModel) -> Result<CustomerResponse> {
         let customer_response = CustomerResponse {

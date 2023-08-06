@@ -1,6 +1,6 @@
 use crate::response::{NoteData, NoteListResponse, NoteResponse, SingleNoteResponse};
 use crate::{
-    error::Error::*, model::NoteModel, schema::CreateNoteSchema, schema::UpdateNoteSchema, Result,
+    error::Error::*, model::NoteModel, schema::CreateNoteSchema, schema::UpdateNoteSchema,
 };
 use chrono::prelude::*;
 use futures::StreamExt;

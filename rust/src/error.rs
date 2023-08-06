@@ -1,111 +1,82 @@
-use mongodb::bson;
-use std::convert::Infallible;
-use thiserror::Error;
-use warp::{http::StatusCode, reply, Rejection, Reply};
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
+use serde::Serialize;
 
-use crate::response::GenericResponse;
+pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Error, Debug)]
+#[derive(Clone, Debug, Serialize, strum_macros::AsRefStr)]
+#[serde(tag = "type", content = "data")]
 pub enum Error {
-    #[error("mongodb error: {0}")]
-    MongoError(#[from] mongodb::error::Error),
-    #[error("sqlx error: {0}")]
-    SqlxError(sqlx::Error),
-    #[error("error during mongodb query: {0}")]
-    MongoQueryError(mongodb::error::Error),
-    #[error("dulicate key error occurred: {0}")]
-    MongoDuplicateError(mongodb::error::Error),
-    #[error("could not serialize data: {0}")]
-    MongoSerializeBsonError(bson::ser::Error),
-    // #[error("could not deserialize bson: {0}")]
-    // MongoDeserializeBsonError(bson::de::Error),
-    #[error("could not access field in document: {0}")]
-    MongoDataError(#[from] bson::document::ValueAccessError),
-    #[error("invalid id used: {0}")]
-    InvalidIDError(String),
+	LoginFail,
+
+	// -- Auth errors.
+	AuthFailNoAuthTokenCookie,
+	AuthFailTokenWrongFormat,
+	AuthFailCtxNotInRequestExt,
+
+	// -- Model errors.
+	TicketDeleteFailIdNotFound { id: u64 },
 }
 
-impl warp::reject::Reject for Error {}
+// region:    --- Error Boilerplate
+impl core::fmt::Display for Error {
+	fn fmt(
+		&self,
+		fmt: &mut core::fmt::Formatter,
+	) -> core::result::Result<(), core::fmt::Error> {
+		write!(fmt, "{self:?}")
+	}
+}
 
-pub async fn handle_rejection(err: Rejection) -> std::result::Result<Box<dyn Reply>, Infallible> {
-    let code;
-    let message;
-    let status;
+impl std::error::Error for Error {}
+// endregion: --- Error Boilerplate
 
-    if err.is_not_found() {
-        status = "failed";
-        code = StatusCode::NOT_FOUND;
-        message = "Route does not exist on the server";
-    } else if let Some(_) = err.find::<warp::filters::body::BodyDeserializeError>() {
-        status = "failed";
-        code = StatusCode::BAD_REQUEST;
-        message = "Invalid Body";
-    } else if let Some(e) = err.find::<Error>() {
-        match e {
-            Error::MongoError(e) => {
-                eprintln!("MongoDB error: {:?}", e);
-                status = "fail";
-                code = StatusCode::INTERNAL_SERVER_ERROR;
-                message = "MongoDB error";
-            }
-            Error::SqlxError(e) => {
-                eprintln!("sqlx error: {:?}", e);
-                status = "fail";
-                code = StatusCode::BAD_REQUEST;
-                message = "sqlx error";
-            }
-            Error::MongoDuplicateError(e) => {
-                eprintln!("MongoDB error: {:?}", e);
-                status = "fail";
-                code = StatusCode::CONFLICT;
-                message = "Duplicate key error";
-            }
-            Error::MongoQueryError(e) => {
-                eprintln!("Error during mongodb query: {:?}", e);
-                status = "fail";
-                code = StatusCode::INTERNAL_SERVER_ERROR;
-                message = "Error during mongodb query";
-            }
-            Error::MongoSerializeBsonError(e) => {
-                eprintln!("Error seserializing BSON: {:?}", e);
-                status = "fail";
-                code = StatusCode::INTERNAL_SERVER_ERROR;
-                message = "Error seserializing BSON";
-            }
-            Error::MongoDataError(e) => {
-                eprintln!("validation error: {:?}", e);
-                status = "fail";
-                code = StatusCode::BAD_REQUEST;
-                message = "validation error";
-            }
-            Error::InvalidIDError(e) => {
-                eprintln!("Invalid ID: {:?}", e);
-                status = "fail";
-                code = StatusCode::BAD_REQUEST;
-                message = e.as_str();
-            }
-             // _ => {
-              //     eprintln!("unhandled application error: {:?}", err);
-              //     status = "error";
-              //     code = StatusCode::INTERNAL_SERVER_ERROR;
-              //     message = "Internal Server Error";
-              // }
-        }
-    } else if let Some(_) = err.find::<warp::reject::MethodNotAllowed>() {
-        status = "failed";
-        code = StatusCode::METHOD_NOT_ALLOWED;
-        message = "Method Not Allowed";
-    } else {
-        eprintln!("unhandled error: {:?}", err);
-        status = "error";
-        code = StatusCode::INTERNAL_SERVER_ERROR;
-        message = "Internal Server Error";
-    }
+impl IntoResponse for Error {
+	fn into_response(self) -> Response {
+		println!("->> {:<12} - {self:?}", "INTO_RES");
 
-    let json = reply::json(&GenericResponse {
-        status: status.into(),
-        message: message.into(),
-    });
+		// Create a placeholder Axum reponse.
+		let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
 
-    Ok(Box::new(reply::with_status(json, code)))
+		// Insert the Error into the reponse.
+		response.extensions_mut().insert(self);
+
+		response
+	}
+}
+
+impl Error {
+	pub fn client_status_and_error(&self) -> (StatusCode, ClientError) {
+		#[allow(unreachable_patterns)]
+		match self {
+			Self::LoginFail => (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL),
+
+			// -- Auth.
+			Self::AuthFailNoAuthTokenCookie
+			| Self::AuthFailTokenWrongFormat
+			| Self::AuthFailCtxNotInRequestExt => {
+				(StatusCode::FORBIDDEN, ClientError::NO_AUTH)
+			}
+
+			// -- Model.
+			Self::TicketDeleteFailIdNotFound { .. } => {
+				(StatusCode::BAD_REQUEST, ClientError::INVALID_PARAMS)
+			}
+
+			// -- Fallback.
+			_ => (
+				StatusCode::INTERNAL_SERVER_ERROR,
+				ClientError::SERVICE_ERROR,
+			),
+		}
+	}
+}
+
+#[derive(Debug, strum_macros::AsRefStr)]
+#[allow(non_camel_case_types)]
+pub enum ClientError {
+	LOGIN_FAIL,
+	NO_AUTH,
+	INVALID_PARAMS,
+	SERVICE_ERROR,
 }
