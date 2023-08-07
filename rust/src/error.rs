@@ -16,6 +16,13 @@ pub enum Error {
 
 	// DB Errors
 	PGError {e: String},
+	MongoParsingError{e:String},
+	MongoConnectionError{e:String},
+	MongoQueryError{e:String},
+	MongoInvalidIDError{e:String},
+	MongoSerializeBsonError{e:String},
+
+
 
 	// -- Model errors.
 	TicketDeleteFailIdNotFound { id: u64 },
@@ -63,6 +70,36 @@ impl Error {
 
 			// -- Model.
 			Self::PGError { e } => {
+				tracing::error!("DB Error {}",e);
+				(StatusCode::BAD_REQUEST, ClientError::DATABASE_ERROR)
+			}
+
+			// -- Model.
+			Self::MongoParsingError { e } => {
+				tracing::error!("DB Error {}",e);
+				(StatusCode::BAD_REQUEST, ClientError::DATABASE_ERROR)
+			}
+
+			// -- Model.
+			Self::MongoConnectionError { e } => {
+				tracing::error!("DB Error {}",e);
+				(StatusCode::BAD_REQUEST, ClientError::DATABASE_ERROR)
+			}
+
+			// -- Model.
+			Self::MongoQueryError { e } => {
+				tracing::error!("DB Error {}",e);
+				(StatusCode::BAD_REQUEST, ClientError::DATABASE_ERROR)
+			}
+
+			// -- Model.
+			Self::MongoInvalidIDError { e } => {
+				tracing::error!("DB Error {}",e);
+				(StatusCode::BAD_REQUEST, ClientError::DATABASE_ERROR)
+			}
+
+			// -- Model.
+			Self::MongoSerializeBsonError { e } => {
 				tracing::error!("DB Error {}",e);
 				(StatusCode::BAD_REQUEST, ClientError::DATABASE_ERROR)
 			}

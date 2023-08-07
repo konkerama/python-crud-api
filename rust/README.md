@@ -11,7 +11,8 @@ todo:
 - testing
 
 axum todo:
-- implement full postgres crud
+- mongo list/put add id on the response
+- try implementing dependencies using dotenv as it is a best practive according to k8s
 
 
 ## Commands
@@ -25,6 +26,10 @@ docker compose up --build --force-recreate -V
 
 # optionally to clean up everything
 docker compose down
+
+# health check
+curl http://localhost:8000/api/healthchecker -s | jq
+
 
 # create customer
 curl -X POST http://localhost:8000/api/pg -d '{"customer_name": "paul","customer_surname": "doe"}' -H "Content-Type: application/json" -s | jq
@@ -41,6 +46,20 @@ curl -X DELETE http://localhost:8000/api/pg/paul -s | jq
 # update
 curl -X PATCH http://localhost:8000/api/pg/paul -d '{"customer_name": "mark","customer_surname": "green"}' -H "Content-Type: application/json" -s | jq
 
+# create order
+curl -X POST http://localhost:8000/api/mongo -d '{"customer_name":"mark", "product_name":"apple"}' -H "Content-Type: application/json" -s | jq
+
+# list orders
+curl http://localhost:8000/api/mongo -s | jq
+
+# get order
+curl http://localhost:8000/api/mongo/id -s | jq
+
+# update order
+curl -X PATCH http://localhost:8000/api/mongo/id -d '{"customer_name":"paul", "product_name":"banana"}' -H "Content-Type: application/json" -s | jq
+
+# delete order
+curl -X DELETE http://localhost:8000/api/mongo/id -s | jq
 
 ```
 

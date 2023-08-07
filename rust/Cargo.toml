@@ -21,3 +21,4 @@ log = "0.4.19"
 axum-macros = "0.3.8"
 strum_macros = "0.25.1"
 tracing = "0.1.37"
+futures = { version = "0.3.25", default-features = false, features = ["async-await"] }

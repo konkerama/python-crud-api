@@ -12,25 +12,15 @@ pub struct ParamOptions {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CreateNoteSchema {
-    pub title: String,
-    pub content: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub category: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub published: Option<bool>,
+pub struct CreateOrderSchema {
+    pub customer_name: String,
+    pub product_name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct UpdateNoteSchema {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub content: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub category: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub published: Option<bool>,
+pub struct UpdateOrderSchema {
+    pub customer_name: String,
+    pub product_name: String,
 }
 
 

@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+// use chrono::{DateTime, Utc};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -9,32 +9,33 @@ pub struct GenericResponse {
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Debug)]
-pub struct NoteResponse {
-    pub id: String,
-    pub title: String,
-    pub content: String,
-    pub category: String,
-    pub published: bool,
-    pub createdAt: DateTime<Utc>,
-    pub updatedAt: DateTime<Utc>,
+pub struct OrderResponse {
+    pub customer_name: String,
+    pub product_name: String,
 }
 
 #[derive(Serialize, Debug)]
-pub struct NoteData {
-    pub note: NoteResponse,
+pub struct OrderData {
+    pub order: OrderResponse,
 }
 
 #[derive(Serialize, Debug)]
-pub struct SingleNoteResponse {
+pub struct SingleOrderResponse {
     pub status: String,
-    pub data: NoteData,
+    pub data: OrderData,
 }
 
 #[derive(Serialize, Debug)]
-pub struct NoteListResponse {
+pub struct DeleteOrderResponse {
+    pub status: String,
+    pub id: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct OrderListResponse {
     pub status: String,
     pub results: usize,
-    pub notes: Vec<NoteResponse>,
+    pub orders: Vec<OrderResponse>,
 }
 
 #[derive(Serialize, Debug)]
