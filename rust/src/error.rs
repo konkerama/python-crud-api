@@ -14,6 +14,9 @@ pub enum Error {
 	AuthFailTokenWrongFormat,
 	AuthFailCtxNotInRequestExt,
 
+	// DB Errors
+	PGError {e: String},
+
 	// -- Model errors.
 	TicketDeleteFailIdNotFound { id: u64 },
 }
@@ -33,7 +36,7 @@ impl std::error::Error for Error {}
 
 impl IntoResponse for Error {
 	fn into_response(self) -> Response {
-		println!("->> {:<12} - {self:?}", "INTO_RES");
+		tracing::info!("->> {:<12} - {self:?}", "INTO_RES");
 
 		// Create a placeholder Axum reponse.
 		let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
@@ -59,6 +62,12 @@ impl Error {
 			}
 
 			// -- Model.
+			Self::PGError { e } => {
+				tracing::error!("DB Error {}",e);
+				(StatusCode::BAD_REQUEST, ClientError::DATABASE_ERROR)
+			}
+
+			// -- Model.
 			Self::TicketDeleteFailIdNotFound { .. } => {
 				(StatusCode::BAD_REQUEST, ClientError::INVALID_PARAMS)
 			}
@@ -78,5 +87,6 @@ pub enum ClientError {
 	LOGIN_FAIL,
 	NO_AUTH,
 	INVALID_PARAMS,
+	DATABASE_ERROR,
 	SERVICE_ERROR,
 }

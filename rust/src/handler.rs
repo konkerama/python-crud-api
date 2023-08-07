@@ -1,11 +1,10 @@
 use crate::{
     // db::DB,
     pg::PG,
-    response::{GenericResponse,CustomerResponse, CustomerListResponse},
-    schema::UpdateNoteSchema,
-    schema::{CreateNoteSchema, CreateCustomerSchema, FilterOptions},
+    response::{GenericResponse, SingleCustomerResponse,CustomerListResponse},
+    schema::{CreateCustomerSchema, FilterOptions},
+    Result,
 };
-use crate::{Error, Result};
 
 use axum::{
     extract::{Path, Query, State},
@@ -16,7 +15,7 @@ use axum::{
 
 pub async fn health_checker_handler() -> Result<impl IntoResponse> {
     const MESSAGE: &str = "Build CRUD API with Rust and MongoDB";
-    println!("{}",MESSAGE);
+    tracing::info!("{}",MESSAGE);
     let response_json = &GenericResponse {
         status: "success".to_string(),
         message: MESSAGE.to_string(),
@@ -98,20 +97,16 @@ pub async fn health_checker_handler() -> Result<impl IntoResponse> {
 #[axum_macros::debug_handler]
 pub async fn create_customer_handler(
     State(db): State<PG>,
-    Json(mut body): Json<CreateCustomerSchema>,
+    Json(body): Json<CreateCustomerSchema>,
 ) -> Result<impl IntoResponse> {
-
-
     let result = db.create_customer(&body)
         .await?;
-
 
     Ok((StatusCode::CREATED, Json(result)))
 
 }
 
-pub async fn handler_404() -> impl IntoResponse {
-    
+pub async fn handler_404() -> impl IntoResponse { 
     (StatusCode::FORBIDDEN, "nothing to see here")
 }
 
@@ -127,14 +122,34 @@ pub async fn list_customer_handler(
     let result = 
         db.list_customers(limit, offset)
         .await?;
+    tracing::info!("info");
+    tracing::debug!("debug");
+    tracing::warn!("warn");
 
     Ok(Json(result.unwrap()))
 }
 
-// // GET /api/pg/<customer-name>
-// pub async fn get_customer_handler(id: String, db: PG) -> WebResult<impl Reply> {
-//     let result = db.get_customer(&id).await.map_err(|e| reject::custom(e))?;
+// GET /api/pg/<customer-name>
+pub async fn get_customer_handler(name: Path<String>, State(db): State<PG>) -> Result<Json<SingleCustomerResponse>> {
+    let result = db.get_customer(&name).await?;
 
-//     Ok(with_status(json(&result), StatusCode::OK))
+    Ok(Json(result.unwrap()))
+}
 
-// }
+// DELETE /api/pg/<customer-name>
+pub async fn delete_customer_handler(name: Path<String>, State(db): State<PG>) -> Result<Json<SingleCustomerResponse>> {
+    let result = db.delete_customer(&name).await?;
+
+    Ok(Json(result.unwrap()))
+}
+
+// UPDATE /api/pg/<customer-name>
+pub async fn update_customer_handler(
+    name: Path<String>, 
+    State(db): State<PG>,
+    Json(body): Json<CreateCustomerSchema>,
+) -> Result<Json<SingleCustomerResponse>> {
+    let result = db.update_customer(&name, &body).await?;
+
+    Ok(Json(result))
+}

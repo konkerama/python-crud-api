@@ -4,9 +4,7 @@ use axum::{
 };
 
 use crate::{
-    handler::{
-        health_checker_handler, create_customer_handler, list_customer_handler
-    },
+    handler::*,
     // db::DB,
     pg::PG,
 };
@@ -18,6 +16,10 @@ pub fn create_router(pg: PG) -> Router {
         .route(
             "/api/pg",
             post(create_customer_handler).get(list_customer_handler)
+        )
+        .route(
+            "/api/pg/:name",
+            get(get_customer_handler).delete(delete_customer_handler).patch(update_customer_handler)
         )
         .with_state(pg)
 }

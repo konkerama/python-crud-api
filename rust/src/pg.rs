@@ -12,18 +12,28 @@ pub struct PG {
 
 impl PG {
     pub async fn init() -> Result<Self> { 
-        let database_url = "postgresql://postgres:postgres@localhost:5432/postgres";
+        let pg_username: String = 
+            std::env::var("POSTGRES_USER").expect("ME_CONFIG_MONGODB_ADMINUSERNAME must be set.");
+        let pg_passwd: String = 
+            std::env::var("POSTGRES_PASSWORD").expect("ME_CONFIG_MONGODB_ADMINPASSWORD must be set.");
+        let pg_url: String = 
+            std::env::var("POSTGRES_URL").expect("ME_CONFIG_MONGODB_SERVER must be set.");
+        let pg_db: String = 
+            std::env::var("POSTGRES_DB").expect("ME_CONFIG_MONGODB_SERVER must be set.");
+        let pg_uri = 
+            format!("postgresql://{}:{}@{}:5432/{}", pg_username, pg_passwd, pg_url, pg_db);
+
         let pool = match PgPoolOptions::new()
             .max_connections(10)
-            .connect(&database_url)
+            .connect(&pg_uri)
             .await
         {
             Ok(pool) => {
-                println!("✅Connection to the database is successful!");
+                tracing::info!("✅Connection to the database is successful!");
                 pool
             }
             Err(err) => {
-                println!("🔥 Failed to connect to the database: {:?}", err);
+                tracing::error!("🔥 Failed to connect to the database: {:?}", err);
                 std::process::exit(1);
             }
         };
@@ -36,7 +46,7 @@ impl PG {
     pub async fn create_customer(&self, body: &CreateCustomerSchema) -> Result<SingleCustomerResponse> {
         let name = body.customer_name.to_owned();
         let surname = body.customer_surname.to_owned();
-
+        
         let query_result = sqlx::query_as!(
             CustomerModel,
             "INSERT INTO customer (customer_name,customer_surname) VALUES ($1, $2) RETURNING *",
@@ -44,7 +54,8 @@ impl PG {
             surname,
         )
         .fetch_one(&self.pool)
-        .await.unwrap();
+        .await
+        .map_err(|e|Error::PGError { e: (e.to_string()) })?;
 
         let customer_response = SingleCustomerResponse {
             name: query_result.customer_name.unwrap_or("john doe".to_string()),
@@ -65,9 +76,9 @@ impl PG {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(|e|{Error::LoginFail})?;
+        .map_err(|e|Error::PGError { e: (e.to_string()) })?;
 
-        println!("{:?}", query_result);
+        tracing::info!("{:?}", query_result);
 
         let mut json_result: Vec<CustomerResponse> = Vec::new();
         for customer in query_result {
@@ -82,25 +93,85 @@ impl PG {
         Ok(Some(customer_response))
     }
 
-    // pub async fn get_customer(&self, id: &String) -> Result<Option<SingleCustomerResponse>> {
-    //     let query_result = sqlx::query_as!(
-    //         CustomerModel,
-    //         "SELECT * FROM customer WHERE customer_name=$1",
-    //         id,
-    //     )
-    //     .fetch_one(&self.pool)
-    //     .await
-    //     .map_err(SqlxError)?;
+    pub async fn get_customer(&self, id: &String) -> Result<Option<SingleCustomerResponse>> {
+        let query_result = sqlx::query_as!(
+            CustomerModel,
+            "SELECT * FROM customer WHERE customer_name=$1",
+            id,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e|Error::PGError { e: (e.to_string()) })?;
 
-    //     let customer_response = SingleCustomerResponse {
-    //         name: query_result.customer_name.unwrap_or("john".to_string()),
-    //         surname: query_result.customer_surname.unwrap_or("doe".to_string()),
-    //         status: "success".to_string(),
-    //     };
+        let customer_response = SingleCustomerResponse {
+            name: query_result.customer_name.unwrap_or("john".to_string()),
+            surname: query_result.customer_surname.unwrap_or("doe".to_string()),
+            status: "success".to_string(),
+        };
 
-    //     Ok(Some(customer_response))
-    // }
+        Ok(Some(customer_response))
+    }
 
+    pub async fn delete_customer(&self, id: &String) -> Result<Option<SingleCustomerResponse>> {
+        let customer_info = sqlx::query_as!(
+            CustomerModel,
+            "SELECT * FROM customer WHERE customer_name=$1",
+            id,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e|Error::PGError { e: (e.to_string()) })?;
+
+
+        sqlx::query_as!(
+            CustomerModel,
+            "DELETE FROM customer WHERE customer_name=$1",
+            id,
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e|Error::PGError { e: (e.to_string()) })?;
+
+        // println!("{:?}",query_result);
+    
+        let customer_response = SingleCustomerResponse {
+            name: customer_info.customer_name.unwrap_or("john".to_string()),
+            surname: customer_info.customer_surname.unwrap_or("doe".to_string()),
+            status: "deleted".to_string(),
+        };
+        Ok(Some(customer_response))
+    }
+
+    pub async fn update_customer(&self, id: &String, body: &CreateCustomerSchema) -> Result<SingleCustomerResponse> {
+        let name = body.customer_name.to_owned();
+        let surname = body.customer_surname.to_owned();
+
+        // ensure customer exists
+        let result = self.get_customer(&id).await?;
+        tracing::info!("{:?}", result);
+
+        let query_result = sqlx::query_as!(
+            CustomerModel,
+            "UPDATE customer SET customer_name=$1,customer_surname=$2 WHERE customer_name=$3 RETURNING *",
+            name,
+            surname,
+            id,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e|Error::PGError { e: (e.to_string()) })?;
+
+        let customer_response = SingleCustomerResponse {
+            name: query_result.customer_name.unwrap_or("john doe".to_string()),
+            surname: query_result.customer_surname.unwrap_or("doe".to_string()),
+            status: "success".to_string(),
+        };
+
+        Ok(customer_response)
+    }
+
+
+    
     fn model_to_result(&self, customer: &CustomerModel) -> Result<CustomerResponse> {
         let customer_response = CustomerResponse {
             name: customer.customer_name.to_owned().unwrap(),

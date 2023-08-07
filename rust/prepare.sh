@@ -1,4 +1,5 @@
 #!/bin/bash
+source local.sh
 docker compose -f liquibase/sqlx-docker-compose.yaml up --force-recreate -V -d
 
 sleep 5 

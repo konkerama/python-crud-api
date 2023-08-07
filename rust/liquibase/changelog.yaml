@@ -6,6 +6,9 @@ databaseChangeLog:
     - createTable:
         columns:
         - column:
+            constraints:
+                primaryKeyName: customers_pkey
+                unique: true
             name: customer_name
             type: VARCHAR
         - column:

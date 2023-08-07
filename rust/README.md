@@ -11,10 +11,7 @@ todo:
 - testing
 
 axum todo:
-- read doc
 - implement full postgres crud
-- tests error messages that are properly working and sending correct feedback back to the client
-- proper logging
 
 
 ## Commands
@@ -33,10 +30,16 @@ docker compose down
 curl -X POST http://localhost:8000/api/pg -d '{"customer_name": "paul","customer_surname": "doe"}' -H "Content-Type: application/json" -s | jq
 
 # get customer
-curl http://localhost:8000/api/pg/mark -s | jq
+curl http://localhost:8000/api/pg/paul -s | jq
 
 # list 
 curl http://localhost:8000/api/pg -s | jq
+
+# delete 
+curl -X DELETE http://localhost:8000/api/pg/paul -s | jq
+
+# update
+curl -X PATCH http://localhost:8000/api/pg/paul -d '{"customer_name": "mark","customer_surname": "green"}' -H "Content-Type: application/json" -s | jq
 
 
 ```

@@ -14,8 +14,8 @@ use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     HeaderValue, Method,
 };
-use axum::{middleware, Json, Router};
-use axum::response::{Html, IntoResponse, Response};
+use axum::{middleware, Json};
+use axum::response::{IntoResponse, Response};
 use serde_json::json;
 
 
@@ -24,21 +24,34 @@ use pg::PG;
 use route::create_router;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
+use tracing_subscriber::{layer::SubscriberExt, Registry};
+use tracing::level_filters::LevelFilter;
+use tracing::Level;
 
 
 #[tokio::main]
 async fn main() {
     if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "tower_http=trace");
+        std::env::set_var("RUST_LOG", "app=info,tower_http=trace");
     }
     let pg = PG::init().await.unwrap();
+    // pretty_env_logger::init();
+    // tracing_subscriber::fmt::init();
 
 
     // todo remove this
     // dotenv().ok();
 
 
-    tracing_subscriber::fmt::init();
+    // tracing_subscriber::fmt::init();
+
+    let subscriber = Registry::default()
+        .with(LevelFilter::from_level(Level::DEBUG))
+        .with(tracing_subscriber::fmt::Layer::default().with_writer(std::io::stdout));
+
+    tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
+
+
     let cors = CorsLayer::new()
         .allow_origin("http://localhost:8000".parse::<HeaderValue>().unwrap())
         .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
@@ -52,18 +65,19 @@ async fn main() {
 
     let app = app.fallback(handler::handler_404);
 
-    println!("🚀 Server started successfully");
+    tracing::info!("🚀 Server started successfully");
     axum::Server::bind(&"0.0.0.0:8000".parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
 }
 
+#[allow(unused_variables)]
 async fn main_response_mapper(
 	req_method: Method,
 	res: Response,
 ) -> Response {
-	println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
+	tracing::info!("->> {:<12} - main_response_mapper", "RES_MAPPER");
 
 	// -- Get the eventual response error.
 	let service_error = res.extensions().get::<Error>();
@@ -80,19 +94,17 @@ async fn main_response_mapper(
 					}
 				});
 
-				println!("    ->> client_error_body: {client_error_body}");
+				tracing::error!("    ->> client_error_body: {client_error_body}");
 
 				// Build the new response from the client_error_body
 				(*status_code, Json(client_error_body)).into_response()
 			});
 
 	// Build and log the server log line.
-	let client_error = client_status_error.unzip().1;
+	// let client_error = client_status_error.unzip().1;
+    // tracing::error!("Method: {:?}, client error: {:?}", req_method, client_error);
 	// TODO: Need to hander if log_request fail (but should not fail request)
-	// let _ =
-	// 	log_request(uuid, req_method, uri, ctx, service_error, client_error).await;
 
-	// println!();
 	error_response.unwrap_or(res)
 }
 

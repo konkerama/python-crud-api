@@ -19,9 +19,9 @@ services:
       - ME_CONFIG_MONGODB_SERVER=mongodb
       - MONGO_INITDB_DATABASE=rust_mongodb
       - MONGODB_NOTE_COLLECTION=notes
-      - POSTGRES_USER=username
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=mydb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
       - POSTGRES_URL=postgres
   liquibase:
     depends_on:

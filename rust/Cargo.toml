@@ -10,17 +10,14 @@ tower-http = { version = "0.4.0", features = ["cors","trace"] }
 tracing-subscriber = "0.3.17"
 chrono = { version = "0.4.23", features = ["serde"] }
 dotenv = "0.15.0"
-futures = { version = "0.3.25", default-features = false, features = ["async-await"] }
 mongodb = { version = "2.3.1", features = ["bson-chrono-0_4"] }
-pretty_env_logger = "0.4.0"
 serde = { version = "1.0.152", features = ["derive"] }
 sqlx = {version="0.7.1", features = ["runtime-async-std-native-tls", "postgres", "uuid", "chrono"]}
 thiserror = "1.0.38"
 tokio = { version = "1.23.0", features = ["full"] }
-warp = "0.3.3"
 serde_json = "1.0.95"
-anyhow = "1.0.72"
 tower = "0.4.13"
 log = "0.4.19"
 axum-macros = "0.3.8"
 strum_macros = "0.25.1"
+tracing = "0.1.37"
