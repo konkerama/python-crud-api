@@ -10,6 +10,7 @@ pub struct GenericResponse {
 #[allow(non_snake_case)]
 #[derive(Serialize, Debug)]
 pub struct OrderResponse {
+    pub id: String,
     pub customer_name: String,
     pub product_name: String,
 }

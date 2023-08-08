@@ -6,7 +6,6 @@ status:
 
 todo:
 
-- implement crud
 - tracing using opentelemetry
 - testing
 

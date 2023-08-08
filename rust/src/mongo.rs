@@ -68,6 +68,7 @@ impl MONGO {
 
         let mut json_result: Vec<OrderResponse> = Vec::new();
         while let Some(doc) = cursor.next().await {
+            println!("{:?}",doc);
             json_result.push(self.doc_to_order(&doc.unwrap())?);
         }
 
@@ -202,6 +203,7 @@ impl MONGO {
 
     fn doc_to_order(&self, order: &OrderModel) -> Result<OrderResponse> {
         let order_response = OrderResponse {
+            id: order.id.to_hex(),
             customer_name: order.customer_name.to_owned(),
             product_name: order.product_name.to_owned(),
         };
