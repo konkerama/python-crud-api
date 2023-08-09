@@ -22,4 +22,11 @@ services:
       - LIQUIBASE_COMMAND_USERNAME=postgres
       - LIQUIBASE_COMMAND_PASSWORD=postgres
     volumes:
-      - .:/liquibase/changelog    
+      - ./liquibase:/liquibase/changelog
+  mongodb:
+    image: mongo
+    ports:
+      - 27017:27017
+    environment: 
+      - MONGO_INITDB_ROOT_USERNAME=username
+      - MONGO_INITDB_ROOT_PASSWORD=password

@@ -1,5 +1,5 @@
 use crate::response::{OrderData, OrderResponse, SingleOrderResponse, OrderListResponse, DeleteOrderResponse};
-use crate::{model::OrderModel, schema::CreateOrderSchema, schema::UpdateOrderSchema,};
+use crate::{model::OrderModel, schema::CreateOrderSchema};
 // use chrono::prelude::*;
 use futures::StreamExt;
 use mongodb::bson::{doc, oid::ObjectId, Document};
@@ -150,7 +150,7 @@ impl MONGO {
     pub async fn edit_order(
         &self,
         id: &str,
-        body: &UpdateOrderSchema,
+        body: &CreateOrderSchema,
     ) -> Result<SingleOrderResponse> {
         let oid = ObjectId::from_str(id)
             .map_err(|e|Error::MongoInvalidIDError { e: (e.to_string()) })?;

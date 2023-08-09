@@ -2,7 +2,7 @@ use crate::{
     mongo::MONGO,
     pg::PG,
     response::{GenericResponse, SingleCustomerResponse,CustomerListResponse, SingleOrderResponse, OrderListResponse, DeleteOrderResponse},
-    schema::{CreateCustomerSchema, FilterOptions, CreateOrderSchema, UpdateOrderSchema},
+    schema::{CreateCustomerSchema, FilterOptions, CreateOrderSchema},
     Result,
 };
 
@@ -127,7 +127,7 @@ pub async fn get_order_handler(
 pub async fn update_order_handler(
     id: Path<String>, 
     State(mongo): State<MONGO>,
-    Json(body): Json<UpdateOrderSchema>,
+    Json(body): Json<CreateOrderSchema>,
 ) -> Result<Json<SingleOrderResponse>> {
     let result = mongo.edit_order(&id, &body)
         .await?;

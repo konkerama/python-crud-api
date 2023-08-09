@@ -1,17 +1,11 @@
 # Rust Crud
 
-status:
-
-- basic api running
-
 todo:
 
 - tracing using opentelemetry
-- testing
 
 axum todo:
 
-- mongo list/put add id on the response
 - try implementing dependencies using dotenv as it is a best practice according to k8s
 
 ## Commands
