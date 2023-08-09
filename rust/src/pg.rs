@@ -3,6 +3,7 @@ use crate::{
     model::CustomerModel, schema::CreateCustomerSchema,
 };
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::types::Uuid;
 use crate::{Error, Result};
 
 #[derive(Clone, Debug)]
@@ -13,13 +14,13 @@ pub struct PG {
 impl PG {
     pub async fn init() -> Result<Self> { 
         let pg_username: String = 
-            std::env::var("POSTGRES_USER").expect("ME_CONFIG_MONGODB_ADMINUSERNAME must be set.");
+            std::env::var("POSTGRES_USER").expect("POSTGRES_USER must be set.");
         let pg_passwd: String = 
-            std::env::var("POSTGRES_PASSWORD").expect("ME_CONFIG_MONGODB_ADMINPASSWORD must be set.");
+            std::env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set.");
         let pg_url: String = 
-            std::env::var("POSTGRES_URL").expect("ME_CONFIG_MONGODB_SERVER must be set.");
+            std::env::var("POSTGRES_URL").expect("POSTGRES_URL must be set.");
         let pg_db: String = 
-            std::env::var("POSTGRES_DB").expect("ME_CONFIG_MONGODB_SERVER must be set.");
+            std::env::var("POSTGRES_DB").expect("POSTGRES_DB must be set.");
         let pg_uri = 
             format!("postgresql://{}:{}@{}:5432/{}", pg_username, pg_passwd, pg_url, pg_db);
 
@@ -58,6 +59,7 @@ impl PG {
         .map_err(|e|Error::PGError { e: (e.to_string()) })?;
 
         let customer_response = SingleCustomerResponse {
+            id: query_result.customer_id.to_string(),
             name: query_result.customer_name.unwrap_or("john doe".to_string()),
             surname: query_result.customer_surname.unwrap_or("doe".to_string()),
             status: "success".to_string(),
@@ -94,16 +96,20 @@ impl PG {
     }
 
     pub async fn get_customer(&self, id: &String) -> Result<Option<SingleCustomerResponse>> {
+        let customer_id = Uuid::parse_str(id)
+            .map_err(|e|Error::SqlxUuid { e: (e.to_string()) })?;
+
         let query_result = sqlx::query_as!(
             CustomerModel,
-            "SELECT * FROM customer WHERE customer_name=$1",
-            id,
+            "SELECT * FROM customer WHERE customer_id=$1",
+            customer_id,
         )
         .fetch_one(&self.pool)
         .await
         .map_err(|e|Error::PGError { e: (e.to_string()) })?;
 
         let customer_response = SingleCustomerResponse {
+            id: query_result.customer_id.to_string(),
             name: query_result.customer_name.unwrap_or("john".to_string()),
             surname: query_result.customer_surname.unwrap_or("doe".to_string()),
             status: "success".to_string(),
@@ -113,10 +119,13 @@ impl PG {
     }
 
     pub async fn delete_customer(&self, id: &String) -> Result<Option<SingleCustomerResponse>> {
+        let customer_id = Uuid::parse_str(id)
+            .map_err(|e|Error::SqlxUuid { e: (e.to_string()) })?;
+
         let customer_info = sqlx::query_as!(
             CustomerModel,
-            "SELECT * FROM customer WHERE customer_name=$1",
-            id,
+            "SELECT * FROM customer WHERE customer_id=$1",
+            customer_id,
         )
         .fetch_one(&self.pool)
         .await
@@ -125,8 +134,8 @@ impl PG {
 
         sqlx::query_as!(
             CustomerModel,
-            "DELETE FROM customer WHERE customer_name=$1",
-            id,
+            "DELETE FROM customer WHERE customer_id=$1",
+            customer_id,
         )
         .execute(&self.pool)
         .await
@@ -135,6 +144,7 @@ impl PG {
         // println!("{:?}",query_result);
     
         let customer_response = SingleCustomerResponse {
+            id: customer_info.customer_id.to_string(),
             name: customer_info.customer_name.unwrap_or("john".to_string()),
             surname: customer_info.customer_surname.unwrap_or("doe".to_string()),
             status: "deleted".to_string(),
@@ -143,6 +153,9 @@ impl PG {
     }
 
     pub async fn update_customer(&self, id: &String, body: &CreateCustomerSchema) -> Result<SingleCustomerResponse> {
+        let customer_id = Uuid::parse_str(id)
+            .map_err(|e|Error::SqlxUuid { e: (e.to_string()) })?;
+
         let name = body.customer_name.to_owned();
         let surname = body.customer_surname.to_owned();
 
@@ -152,16 +165,17 @@ impl PG {
 
         let query_result = sqlx::query_as!(
             CustomerModel,
-            "UPDATE customer SET customer_name=$1,customer_surname=$2 WHERE customer_name=$3 RETURNING *",
+            "UPDATE customer SET customer_name=$1,customer_surname=$2 WHERE customer_id=$3 RETURNING *",
             name,
             surname,
-            id,
+            customer_id,
         )
         .fetch_one(&self.pool)
         .await
         .map_err(|e|Error::PGError { e: (e.to_string()) })?;
 
         let customer_response = SingleCustomerResponse {
+            id: query_result.customer_id.to_string(),
             name: query_result.customer_name.unwrap_or("john doe".to_string()),
             surname: query_result.customer_surname.unwrap_or("doe".to_string()),
             status: "success".to_string(),
@@ -174,6 +188,7 @@ impl PG {
     
     fn model_to_result(&self, customer: &CustomerModel) -> Result<CustomerResponse> {
         let customer_response = CustomerResponse {
+            id: customer.customer_id.to_owned().to_string(),
             name: customer.customer_name.to_owned().unwrap(),
             surname: customer.customer_surname.to_owned().unwrap(),
         };

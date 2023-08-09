@@ -1,6 +1,6 @@
 # Rust Crud
 
-status: 
+status:
 
 - basic api running
 
@@ -10,9 +10,9 @@ todo:
 - testing
 
 axum todo:
-- mongo list/put add id on the response
-- try implementing dependencies using dotenv as it is a best practive according to k8s
 
+- mongo list/put add id on the response
+- try implementing dependencies using dotenv as it is a best practice according to k8s
 
 ## Commands
 
@@ -34,7 +34,7 @@ curl http://localhost:8000/api/healthchecker -s | jq
 curl -X POST http://localhost:8000/api/pg -d '{"customer_name": "paul","customer_surname": "doe"}' -H "Content-Type: application/json" -s | jq
 
 # get customer
-curl http://localhost:8000/api/pg/paul -s | jq
+curl http://localhost:8000/api/pg/id -s | jq
 
 # list 
 curl http://localhost:8000/api/pg -s | jq
@@ -58,20 +58,20 @@ curl http://localhost:8000/api/mongo/id -s | jq
 curl -X PATCH http://localhost:8000/api/mongo/id -d '{"customer_name":"paul", "product_name":"banana"}' -H "Content-Type: application/json" -s | jq
 
 # delete order
-curl -X DELETE http://localhost:8000/api/mongo/id -s | jq
+curl -X DELETE http://localhost:8000/api/mongo/id -s | newasdadsjq
 
 ```
-
 
 https://codevoweb.com/build-a-simple-api-in-rust/
 
 ## mongo db
+
 https://codevoweb.com/build-a-crud-api-with-rust-and-mongodb/
 https://www.mongodb.com/developer/languages/rust/rust-mongodb-crud-tutorial/#retrieve-data-from-a-collection
 https://github.com/zupzup/rust-web-mongodb-example/blob/main/src/db.rs
 
 create
-curl -X POST http://localhost:8000/api/notes -d '{"id": "123","title": "asdads","content": "String","category": "Category"}' -H "Content-Type: application/json" -s | jq
+curl -X POST http://localhost:8000/api/notes -d '{"id": "123","title": "name","content": "String","category": "Category"}' -H "Content-Type: application/json" -s | jq
 
 list
 curl http://localhost:8000/api/notes/ -s | jq
@@ -83,9 +83,10 @@ delete
 curl -X DELETE http://localhost:8000/api/notes/64ca59ece626c213c8d393c7 -s | jq
 
 patch
-curl -X PATCH http://localhost:8000/api/notes/64ca59ece626c213c8d393c7~ -d '{"title": "newasdads","content": "String","category": "Category"}' -H "Content-Type: application/json"
+curl -X PATCH http://localhost:8000/api/notes/64ca59ece626c213c8d393c7~ -d '{"title": "name","content": "String","category": "Category"}' -H "Content-Type: application/json"
 
-## postgres 
+## postgres
+
 proposed solution for calling postgres from Rust
 https://github.com/launchbadge/sqlx
 https://stackoverflow.com/questions/71202762/rust-warpsqlx-service-idiomatic-way-of-passing-dbpool-from-main-to-handlers
@@ -101,8 +102,8 @@ https://stackoverflow.com/questions/61945533/how-do-i-use-tokio-postgres-with-wa
 
 curl -X POST http://localhost:8000/api/pg -d '{"customer_name": "paul","customer_surname": "doe"}' -H "Content-Type: application/json" -s | jq
 
-
 ## axum
+
 - https://github.com/davidpdrsn/realworld-axum-sqlx/tree/main
 - https://blog.logrocket.com/rust-axum-error-handling/
 - https://github.com/tokio-rs/axum/blob/main/examples/global-404-handler/src/main.rs

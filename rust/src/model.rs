@@ -14,6 +14,7 @@ pub struct OrderModel {
 #[allow(non_snake_case)]
 #[derive(Debug, FromRow, Deserialize, Serialize)]
 pub struct CustomerModel {
+    pub customer_id: sqlx::types::Uuid,
     pub customer_name: Option<String>,
     pub customer_surname: Option<String>,
 }

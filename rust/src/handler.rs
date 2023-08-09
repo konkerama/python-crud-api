@@ -48,38 +48,35 @@ pub async fn list_customer_handler(
 
     let Query(opts) = opts.unwrap_or_default();
     let limit = opts.limit.unwrap_or(10) as i64;
-    let offset = opts.page.unwrap_or(1) as i64;
+    let offset = opts.page.unwrap_or(0) as i64;
     let result = 
         db.list_customers(limit, offset)
         .await?;
-    tracing::info!("info");
-    tracing::debug!("debug");
-    tracing::warn!("warn");
 
     Ok(Json(result.unwrap()))
 }
 
 // GET /api/pg/<customer-name>
-pub async fn get_customer_handler(name: Path<String>, State(db): State<PG>) -> Result<Json<SingleCustomerResponse>> {
-    let result = db.get_customer(&name).await?;
+pub async fn get_customer_handler(id: Path<String>, State(db): State<PG>) -> Result<Json<SingleCustomerResponse>> {
+    let result = db.get_customer(&id).await?;
 
     Ok(Json(result.unwrap()))
 }
 
 // DELETE /api/pg/<customer-name>
-pub async fn delete_customer_handler(name: Path<String>, State(db): State<PG>) -> Result<Json<SingleCustomerResponse>> {
-    let result = db.delete_customer(&name).await?;
+pub async fn delete_customer_handler(id: Path<String>, State(db): State<PG>) -> Result<Json<SingleCustomerResponse>> {
+    let result = db.delete_customer(&id).await?;
 
     Ok(Json(result.unwrap()))
 }
 
 // UPDATE /api/pg/<customer-name>
 pub async fn update_customer_handler(
-    name: Path<String>, 
+    id: Path<String>, 
     State(db): State<PG>,
     Json(body): Json<CreateCustomerSchema>,
 ) -> Result<Json<SingleCustomerResponse>> {
-    let result = db.update_customer(&name, &body).await?;
+    let result = db.update_customer(&id, &body).await?;
 
     Ok(Json(result))
 }

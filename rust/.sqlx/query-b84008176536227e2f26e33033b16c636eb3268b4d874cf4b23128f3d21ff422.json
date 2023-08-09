@@ -5,11 +5,16 @@
     "columns": [
       {
         "ordinal": 0,
+        "name": "customer_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
         "name": "customer_name",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 1,
+        "ordinal": 2,
         "name": "customer_surname",
         "type_info": "Varchar"
       }
@@ -21,6 +26,7 @@
       ]
     },
     "nullable": [
+      false,
       true,
       true
     ]

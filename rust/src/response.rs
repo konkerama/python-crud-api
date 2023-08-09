@@ -41,6 +41,7 @@ pub struct OrderListResponse {
 
 #[derive(Serialize, Debug)]
 pub struct CustomerResponse {
+    pub id: String,
     pub name: String,
     pub surname: String,
 }
@@ -55,6 +56,7 @@ pub struct CustomerListResponse {
 #[derive(Serialize, Debug)]
 pub struct SingleCustomerResponse {
     pub status: String,
+    pub id: String,
     pub name: String,
     pub surname: String,
 }

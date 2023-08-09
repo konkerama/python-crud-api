@@ -16,6 +16,7 @@ pub enum Error {
 
 	// DB Errors
 	PGError {e: String},
+	SqlxUuid {e: String},
 	MongoParsingError{e:String},
 	MongoConnectionError{e:String},
 	MongoQueryError{e:String},
@@ -39,16 +40,16 @@ impl core::fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
-// endregion: --- Error Boilerplate
+// end region: --- Error Boilerplate
 
 impl IntoResponse for Error {
 	fn into_response(self) -> Response {
 		tracing::info!("->> {:<12} - {self:?}", "INTO_RES");
 
-		// Create a placeholder Axum reponse.
+		// Create a placeholder Axum response.
 		let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
 
-		// Insert the Error into the reponse.
+		// Insert the Error into the response.
 		response.extensions_mut().insert(self);
 
 		response
@@ -70,6 +71,12 @@ impl Error {
 
 			// -- Model.
 			Self::PGError { e } => {
+				tracing::error!("DB Error {}",e);
+				(StatusCode::BAD_REQUEST, ClientError::DATABASE_ERROR)
+			}
+
+			// -- Model.
+			Self::SqlxUuid { e } => {
 				tracing::error!("DB Error {}",e);
 				(StatusCode::BAD_REQUEST, ClientError::DATABASE_ERROR)
 			}

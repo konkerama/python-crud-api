@@ -7,8 +7,13 @@ databaseChangeLog:
         columns:
         - column:
             constraints:
-                primaryKeyName: customers_pkey
-                unique: true
+              nullable: false
+              primaryKey: true
+              primaryKeyName: customers_pkey
+            name: customer_id
+            type: uuid
+            defaultValueComputed: 'gen_random_uuid()'
+        - column:   
             name: customer_name
             type: VARCHAR
         - column:
