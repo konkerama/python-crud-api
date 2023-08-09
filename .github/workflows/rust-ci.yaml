@@ -67,7 +67,7 @@ jobs:
   docker_build_push:
     name: Docker Build and Push
     runs-on: ubuntu-latest
-    needs: lint_test
+    needs: [lint_test, identify_new_version]
     steps:
       -
         name: Set up QEMU
