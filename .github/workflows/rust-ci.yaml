@@ -18,6 +18,16 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
+
+    - name: ⚡ Cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
     - uses: actions-rs/cargo@v1
       with:
         command: install
@@ -25,7 +35,7 @@ jobs:
 
     - name: Install dependencies
       working-directory: rust
-      run: ./test
+      run: ./test.sh
 
   # identify_new_version:
   #   name: Identify New Release
