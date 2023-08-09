@@ -20,9 +20,10 @@ jobs:
         toolchain: stable
     - uses: actions-rs/cargo@v1
       with:
-        command: install sqlx
+        command: install sqlx_cli
 
     - name: Install dependencies
+      working-directory: rust
       run: ./test
 
   # identify_new_version:
