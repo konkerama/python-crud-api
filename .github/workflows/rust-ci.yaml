@@ -1,8 +1,8 @@
-name: 'CICD'
+name: 'rust cicd'
 
 on:
   push:
-    branches: [ "main" ]
+    # branches: [ "main" ]
   pull_request:
 
 permissions:
