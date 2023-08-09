@@ -1,4 +1,3 @@
-// use chrono::{DateTime, Utc};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -47,7 +46,6 @@ pub struct CustomerResponse {
 }
 
 #[derive(Serialize, Debug)]
-
 pub struct CustomerListResponse {
     pub status: String,
     pub data: Vec<CustomerResponse>,

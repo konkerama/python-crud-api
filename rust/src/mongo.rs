@@ -1,16 +1,12 @@
 use crate::response::{OrderData, OrderResponse, SingleOrderResponse, OrderListResponse, DeleteOrderResponse};
 use crate::{model::OrderModel, schema::CreateOrderSchema};
-// use chrono::prelude::*;
 use futures::StreamExt;
 use mongodb::bson::{doc, oid::ObjectId, Document};
 use mongodb::options::{FindOneAndUpdateOptions, FindOptions, ReturnDocument};
 use mongodb::{bson, options::ClientOptions, Client, Collection};
-// use mongodb::options::{IndexOptions};
-// use mongodb::{IndexModel};
 use std::str::FromStr;
 use std::convert::TryFrom;
 use crate::{Error, Result};
-
 
 #[derive(Clone, Debug)]
 pub struct MONGO {
@@ -93,13 +89,10 @@ impl MONGO {
             .await
             .map_err(|e| {
                 if e.to_string()
-                    .contains("E11000 duplicate key error collection")
-                {
-                    // return MongoDuplicateError(e);
+                    .contains("E11000 duplicate key error collection"){
                     tracing::error!("🔥 MongoDuplicateError: {:?}", e);
                     std::process::exit(1);
                 }
-                // return MongoQueryError(e);
                 tracing::error!("🔥 MongoQueryError: {:?}", e);
                 std::process::exit(1);
             })?;
@@ -185,7 +178,7 @@ impl MONGO {
 
     pub async fn delete_order(&self, id: &str) -> Result<DeleteOrderResponse> {
         let oid = ObjectId::from_str(id)
-           .map_err(|e|Error::MongoInvalidIDError { e: (e.to_string()) })?;
+            .map_err(|e|Error::MongoInvalidIDError { e: (e.to_string()) })?;
 
         let _result = self
             .collection

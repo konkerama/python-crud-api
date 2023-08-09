@@ -69,7 +69,6 @@ impl PG {
     }
 
     pub async fn list_customers(&self, limit: i64, offset: i64) -> Result<Option<CustomerListResponse>> {
-
         let query_result = sqlx::query_as!(
             CustomerModel,
             "SELECT * FROM customer ORDER by customer_name LIMIT $1 OFFSET $2",
@@ -140,8 +139,6 @@ impl PG {
         .execute(&self.pool)
         .await
         .map_err(|e|Error::PGError { e: (e.to_string()) })?;
-
-        // println!("{:?}",query_result);
     
         let customer_response = SingleCustomerResponse {
             id: customer_info.customer_id.to_string(),
