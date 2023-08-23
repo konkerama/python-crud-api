@@ -1,0 +1,14 @@
+apiVersion: skaffold/v4beta5
+kind: Config
+metadata:
+  name: app
+build:
+  artifacts:
+    - image: local/k8s-application
+      docker:
+        dockerfile: Dockerfile
+manifests:
+  kustomize:
+    paths:
+    - k8s/overlays/local/
+

@@ -1,0 +1,57 @@
+version: "3"
+
+services:
+  python:
+    build: .
+    depends_on:
+      - mongodb
+      - postgres
+    # image: sample-python-container:latest
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    environment:
+      - ENV=dev
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=username
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
+      - POSTGRES_URL=postgres
+  mongodb:
+    image: mongo
+    ports:
+      - 27017:27017
+    environment: 
+      - MONGO_INITDB_ROOT_USERNAME=username
+      - MONGO_INITDB_ROOT_PASSWORD=password
+  monogoexpress:
+    image: mongo-express
+    depends_on:
+      - mongodb
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=username
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    environment: 
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - 8082:80
+    environment: 
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=password
+      - PGADMIN_PORT=80

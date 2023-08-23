@@ -1,0 +1,183 @@
+name: 'CICD'
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  lint_test:
+    name: 'Lint and Test'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+        cache: 'pip'
+
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ hashFiles('requirements.txt') }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+        pip install pytest
+        pip install -r $(git ls-files '*requirements.txt')
+
+    - name: Analysing the code with pylint
+      run: pylint $(git ls-files '*.py') --disable=C
+
+    # - name: Test Code
+    #   run: |
+    #     export ENV=${{ env.ENV_NAME }}
+    #     pytest
+
+  identify_new_version:
+    name: Identify New Release
+    runs-on: ubuntu-latest
+    outputs: 
+      NEW_RELEASE: ${{ steps.taggerDryRun.outputs.new_tag }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
+    - name: Minor version for each merge
+      id: taggerDryRun
+      uses: anothrNick/github-tag-action@1.67.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DRY_RUN: true
+
+    - name: echo new tag
+      run: |
+        echo "The next tag version will be: ${{ steps.taggerDryRun.outputs.new_tag }}"
+    - name: echo tag
+      run: |
+        echo "The current tag is: ${{ steps.taggerDryRun.outputs.tag }}"
+    - name: echo part
+      run: |
+        echo "The version increment was: ${{ steps.taggerDryRun.outputs.part }}"
+
+
+  docker_build_push:
+    name: Docker Build and Push
+    runs-on: ubuntu-latest
+    needs: [lint_test, identify_new_version]
+    steps:
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: ${{ github.repository }}:${{github.sha}}, ${{ github.repository }}:${{needs.identify_new_version.outputs.NEW_RELEASE}}
+          cache-from: type=gha
+          cache-to: type=gha,mode=
+          
+  bump_up_version:
+    name: Bump up Release
+    runs-on: ubuntu-latest
+    needs: docker_build_push
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
+    - name: Minor version for each merge
+      id: taggerDryRun
+      uses: anothrNick/github-tag-action@1.67.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: echo new tag
+      run: |
+        echo "The next tag version will be: ${{ steps.taggerDryRun.outputs.new_tag }}"
+    - name: echo tag
+      run: |
+        echo "The current tag is: ${{ steps.taggerDryRun.outputs.tag }}"
+    - name: echo part
+      run: |
+        echo "The version increment was: ${{ steps.taggerDryRun.outputs.part }}"
+
+    - name: create release
+      run: |
+        curl -L \
+          -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/${{ github.repository }}/releases \
+          -d '{"tag_name":"${{ steps.taggerDryRun.outputs.new_tag }}","target_commitish":"main","name":"${{ steps.taggerDryRun.outputs.new_tag }}","body":"Description of the release","draft":false,"prerelease":false,"generate_release_notes":false}'
+
+  open_pr:
+    name: Opening a PR to project repo
+    runs-on: ubuntu-latest
+    needs: [bump_up_version, identify_new_version] 
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: '0'
+          repository: ${{ github.actor }}/${{ vars.K8S_PROJECT }}
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: git checkout
+        run: git checkout ${{ github.event.repository.name }}/${{needs.identify_new_version.outputs.NEW_RELEASE}} || git checkout -b ${{ github.event.repository.name }}/${{needs.identify_new_version.outputs.NEW_RELEASE}}
+
+      - name: initialize mandatory git config
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email noreply@github.com
+
+      - name: Update values.yaml
+        uses: fjogeleit/yaml-update-action@main
+        with:
+          valueFile: 'python-app/overlays/dev/app.yaml'
+          propertyPath: 'spec.template.spec.containers[0].image'
+          value: ${{ github.repository }}:${{needs.identify_new_version.outputs.NEW_RELEASE}}
+          commitChange: false
+
+      - name: commit and push changes
+        run: |
+          git add . 
+          git commit -m "new commit"
+          git push origin ${{ github.event.repository.name }}/${{needs.identify_new_version.outputs.NEW_RELEASE}}
+
+
+      - name: create pr
+        run: |
+          echo "${{ secrets.GH_TOKEN }}" > .githubtoken
+          gh auth login --with-token < .githubtoken
+          rm .githubtoken
+          gh pr create --title "Deploy ${{ github.repository }}:${{needs.identify_new_version.outputs.NEW_RELEASE}} to dev" --body "Optional: add more info about the release" --head "${{ github.event.repository.name }}/${{needs.identify_new_version.outputs.NEW_RELEASE}}" --base main
