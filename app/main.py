@@ -4,6 +4,7 @@ import os
 import logging
 from flask import Flask, jsonify, request
 import helper
+import orders
 from sys import stdout
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.wsgi import OpenTelemetryMiddleware
@@ -134,19 +135,23 @@ def mongo_orders():
         output = parse_json(items_df.to_dict())
         logger.info(output)
         return output
-    dbname = get_database()
-    collection_name = dbname["orders"]
-    customer_id = request.json.get('customer_id')
-    product_name = request.json.get('product_name')
-    item = {
-    "customer_id" : customer_id,
-    "product_name" : product_name,
-    }
-    collection_name.insert_one(item)
-    logger.info("item %s inserted", item)
-    output=parse_json(dict(item, status="inserted"))
-    logger.info(output)
+    output = orders.post_order(customer_id=request.json.get('customer_id'), product_name=request.json.get('product_name'))
     return output
+    # dbname = get_database()
+    # collection_name = dbname["orders"]
+    # customer_id = request.json.get('customer_id')
+    # product_name = request.json.get('product_name')
+    # item = {
+    # "customer_id" : customer_id,
+    # "product_name" : product_name,
+    # }
+    # collection_name.insert_one(item)
+    # logger.info("item %s inserted", item)
+    # output=parse_json(dict(item, status="inserted"))
+    # logger.info(output)
+    # return output
+
+
 
 @app.route('/home/<int:num>', methods = ['GET'])
 def disp(num):
