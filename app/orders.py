@@ -23,20 +23,3 @@ def post_order(connection, customer_id, product_name):
     # logger.info(output)
     
     return output
-
-
-from pytest_mock_resources import create_mongo_fixture
-
-mongo = create_mongo_fixture()
-
-def test_insert_into_customer(mongo):
-    post_order(mongo,"foo", "bar")
-
-    collection = mongo['orders']
-    returned = collection.find_one()
-    item = {
-        "customer_id" : returned["customer_id"],
-        "product_name" : returned["product_name"],
-        }
-
-    assert item == {"customer_id": "foo", "product_name": "bar"}

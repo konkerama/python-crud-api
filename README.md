@@ -4,14 +4,35 @@ Sample python crud api using flask that integrates with mongodb and postgresql. 
 CICD creates and pushes a docker container that can also run in k8s.
 Github actions also creates a pr to be used in gitops.
 
+Local Development
+``` bash
+# Spin up dependency containers
+docker compose -f docker-compose-local.yml up
+
+
+```
+
+Run application as container locally:
+``` bash 
+docker compose up --build
+```
+
+build container image
+``` bash
+docker build -t konkerama/go-crud-api:latest . && docker push konkerama/go-crud-api:latest
+```
+
+
+
+
 
 ## Environment Information
 
 ### Install a new python package
 
 ``` bash
-pipenv install ...
-pipenv run pip freeze > requirements.txt
+uv add <package>
+uv lock
 ```
 
 ### Deploy App to K8s 

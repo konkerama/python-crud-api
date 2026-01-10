@@ -2,6 +2,7 @@
 # import necessary libraries and functions
 import os
 import logging
+from pathlib import Path
 from flask import Flask, jsonify, request
 import helper
 import orders
@@ -32,9 +33,33 @@ logger.setLevel(logging.INFO)
 consoleHandler = logging.StreamHandler(stdout) #set streamhandler to stdout
 consoleHandler.setFormatter(logFormatter)
 # logger.addHandler(consoleHandler)
+
+# Local development convenience: load env vars from .env.local if present.
+# This is a no-op in Docker/K8s where env vars are provided by the runtime.
+try:
+    from dotenv import load_dotenv
+
+    repo_root = Path(__file__).resolve().parents[1]
+    dotenv_path = repo_root / ".env.local"
+    if dotenv_path.exists():
+        load_dotenv(dotenv_path=dotenv_path, override=False)
+except ModuleNotFoundError:
+    # python-dotenv is expected in local dev; keep runtime working even if absent.
+    pass
+
 config = helper.read_config()
 
-ENABLE_TELEMETRY= literal_eval(os.environ['ENABLE_TELEMETRY'])
+ENABLE_TELEMETRY = literal_eval(os.getenv('ENABLE_TELEMETRY', 'False'))
+
+
+def _require_env(name: str) -> str:
+    value = os.getenv(name)
+    if value is None or value == "":
+        raise RuntimeError(
+            f"Missing required environment variable: {name}. "
+            "Set it in your shell, Docker/K8s env, or in .env.local."
+        )
+    return value
 
 if ENABLE_TELEMETRY:
     logger.info('ENABLE_TELEMETRY=True, enabling tracing...')
@@ -46,7 +71,7 @@ if ENABLE_TELEMETRY:
         })
 
     provider = TracerProvider(resource=resource)
-    processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://opentelemetry-collector.monitoring.svc.cluster.local:4317"))
+    processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://otel-opentelemetry-collector.monitoring.svc.cluster.local:4317"))
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
@@ -59,13 +84,13 @@ else:
     logger.info('ENABLE_TELEMETRY=False, tracing is disabled')
     app = Flask(__name__)
 
-MONGODB_USERNAME= os.environ['ME_CONFIG_MONGODB_ADMINUSERNAME']
-MONGODB_PASSWD= os.environ['ME_CONFIG_MONGODB_ADMINPASSWORD']
-ME_CONFIG_MONGODB_SERVER=os.environ['ME_CONFIG_MONGODB_SERVER']
-POSTGRES_USER= os.environ['POSTGRES_USER']
-POSTGRES_PASSWORD= os.environ['POSTGRES_PASSWORD']
-POSTGRES_DB= os.environ['POSTGRES_DB']
-POSTGRES_URL= os.environ['POSTGRES_URL']
+MONGODB_USERNAME = _require_env('ME_CONFIG_MONGODB_ADMINUSERNAME')
+MONGODB_PASSWD = _require_env('ME_CONFIG_MONGODB_ADMINPASSWORD')
+ME_CONFIG_MONGODB_SERVER = _require_env('ME_CONFIG_MONGODB_SERVER')
+POSTGRES_USER = _require_env('POSTGRES_USER')
+POSTGRES_PASSWORD = _require_env('POSTGRES_PASSWORD')
+POSTGRES_DB = _require_env('POSTGRES_DB')
+POSTGRES_URL = _require_env('POSTGRES_URL')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_URL}:5432/{POSTGRES_DB}"
 db = SQLAlchemy(app)
@@ -135,7 +160,12 @@ def mongo_orders():
         output = parse_json(items_df.to_dict())
         logger.info(output)
         return output
-    output = orders.post_order(customer_id=request.json.get('customer_id'), product_name=request.json.get('product_name'))
+    dbname = get_database()
+    output = orders.post_order(
+        dbname,
+        customer_id=request.json.get('customer_id'),
+        product_name=request.json.get('product_name'),
+    )
     return output
     # dbname = get_database()
     # collection_name = dbname["orders"]

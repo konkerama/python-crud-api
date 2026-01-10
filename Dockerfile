@@ -1,36 +1,46 @@
-FROM python:3.11-slim
+# syntax=docker/dockerfile:1
 
-RUN apt-get clean && apt-get -y update
+ARG PYTHON_VERSION=3.14
+ARG UV_VERSION=0.5.14
 
-RUN apt-get -y install nginx \
-    && apt-get -y install python3-dev \
-    && apt-get -y install build-essential
+FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
+FROM python:${PYTHON_VERSION}-slim AS base
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Install Python dependencies (locked) into a dedicated venv using uv.
+FROM base AS deps
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
+    PATH="/opt/venv/bin:/root/.local/bin:${PATH}"
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        build-essential \
+        python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=uv /uv /usr/local/bin/uv
+
+WORKDIR /srv/flask_app
+COPY pyproject.toml uv.lock ./
+
+# --no-install-project because this repo runs from /srv/flask_app/app and isn't packaged.
+RUN uv sync --frozen --no-dev --no-install-project
+
+# Runtime image: nginx + the prebuilt venv + your app code.
+FROM base AS runtime
+ENV PATH="/opt/venv/bin:${PATH}"
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends nginx libexpat1 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv/flask_app/server
-
-# https://dev.to/ajeetraina/boost-your-docker-workflow-introducing-docker-init-for-python-developers-3mh6
-# https://github.com/tiangolo/uwsgi-nginx-flask-docker/issues/66
-# ARG UID=10001
-# RUN adduser \
-#     --disabled-password \
-#     --gecos "" \
-#     --home "/nonexistent" \
-#     --shell "/sbin/nologin" \
-#     --no-create-home \
-#     --uid "${UID}" \
-#     appuser
-
-COPY requirements.txt ./
-RUN python -m pip install --no-cache-dir -r requirements.txt
-
-RUN opentelemetry-bootstrap --action=install
-
-# USER appuser
-
+COPY --from=deps /opt/venv /opt/venv
 COPY . /srv/flask_app
-COPY ./server/nginx.conf /etc/nginx
+COPY ./server/nginx.conf /etc/nginx/nginx.conf
 
+EXPOSE 8080
 RUN chmod +x ./start.sh
 CMD ["./start.sh"]
-
-# CMD [ "opentelemetry-instrument", "python", "./main.py" ]
