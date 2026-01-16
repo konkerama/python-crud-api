@@ -8,7 +8,7 @@ Local Development
 ``` bash
 # Spin up dependency containers
 docker compose -f docker-compose-local.yml up
-
+uv run app/main.py
 
 ```
 
