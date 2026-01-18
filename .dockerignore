@@ -1,0 +1,31 @@
+.git
+.github
+.vscode
+
+# Local env / tooling
+.venv
+.env
+.env.*
+.python-version
+
+# Python caches
+__pycache__
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Tests (keep out of runtime image)
+tests
+
+# Misc
+*.log
+.DS_Store
+
+# Docker / local scripts not needed at runtime
+docker-compose*.yml
+skaffold.yaml
+load.sh
+test.sh

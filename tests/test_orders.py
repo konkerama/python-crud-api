@@ -1,11 +1,8 @@
-import orders
-from pytest_mock_resources import create_mongo_fixture
+from app import orders
+import mongomock
 
-
-mongo = create_mongo_fixture()
-
-
-def test_insert_into_orders_collection(mongo):
+def test_insert_into_orders_collection():
+    mongo = mongomock.MongoClient()["orders"]
     output = orders.post_order(mongo, "foo", "bar")
     assert output["status"] == "inserted"
 

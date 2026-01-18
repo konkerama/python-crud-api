@@ -5,23 +5,25 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "flask>=3.1.2",
-    "flask-sqlalchemy>=3.1.1",
+    "fastapi[standard]>=0.128.0",
+    "helper>=2.5.0",
+    "loguru>=0.7.3",
     "opentelemetry-api>=1.39.1",
-    "opentelemetry-exporter-otlp>=1.39.1",
-    "opentelemetry-instrumentation>=0.60b1",
-    "opentelemetry-instrumentation-flask>=0.60b1",
+    "opentelemetry-instrumentation-fastapi>=0.60b1",
+    "opentelemetry-instrumentation-pymongo>=0.60b1",
     "opentelemetry-instrumentation-requests>=0.60b1",
+    "opentelemetry-instrumentation-sqlalchemy>=0.60b1",
     "opentelemetry-sdk>=1.39.1",
-    "pandas>=2.3.3",
     "psycopg2-binary>=2.9.11",
     "pymongo>=4.16.0",
     "python-dotenv>=1.0.0",
     "requests>=2.32.5",
-    "uwsgi>=2.0.30",
+    "sqlmodel>=0.0.31",
 ]
 
 [dependency-groups]
 dev = [
+    "mongomock>=4.3.0",
+    "pytest>=8.0.0",
     "pytest-mock-resources>=2.12.4",
 ]

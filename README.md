@@ -8,9 +8,32 @@ Local Development
 ``` bash
 # Spin up dependency containers
 docker compose -f docker-compose-local.yml up
-uv run app/main.py
+# Run as a module so `app.*` imports work correctly
+uv run -m app.main
 
+docker compose --build -f docker-compose.yml up
+
+# to run locally do:
+docker compose up --build
+
+# run tests
+uv run -m pytest -q
 ```
+
+## Telemetry (OpenTelemetry)
+
+This service supports OpenTelemetry tracing via auto-instrumentation (FastAPI + requests + SQLAlchemy + PyMongo).
+
+- Disable completely (default): set `ENABLE_TELEMETRY=False` and nothing is configured/instrumented.
+- Enable: set `ENABLE_TELEMETRY=True` plus an OTLP endpoint (examples below).
+
+Common environment variables:
+
+- `ENABLE_TELEMETRY=True|False`
+- `OTEL_SERVICE_NAME=python-crud-api`
+- `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` (OTLP/gRPC)
+- `OTEL_TRACES_SAMPLER=always_on|always_off|traceidratio`
+- `OTEL_TRACES_SAMPLER_ARG=0.1` (only for `traceidratio`)
 
 Run application as container locally:
 ``` bash 

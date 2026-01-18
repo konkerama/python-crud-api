@@ -1,38 +1,22 @@
 ''' Using flask to make an api '''
 # import necessary libraries and functions
 import os
-import logging
+from loguru import logger
 from pathlib import Path
-from flask import Flask, jsonify, request
-import helper
-import orders
+# from flask import Flask, jsonify, request
+from contextlib import asynccontextmanager
+from typing import Union
+from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel
+from sqlmodel import Field, Session, SQLModel, create_engine, select
+from app import helper, orders
 from sys import stdout
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from opentelemetry.instrumentation.wsgi import OpenTelemetryMiddleware
 import json
-from ast import literal_eval
-from flask_sqlalchemy import SQLAlchemy
-
-
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from pymongo import MongoClient
-from pandas import DataFrame
 from bson import json_util
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
-# Logging Configuration
-logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(name)-12s %(levelname)-8s %(filename)s:%(funcName)s %(message)s")
-logFormatter = logging.Formatter("[%(asctime)s] %(name)-12s %(levelname)-8s %(filename)s:%(funcName)s %(message)s")
-logger = logging.getLogger('werkzeug')
-logger.setLevel(logging.INFO)
-consoleHandler = logging.StreamHandler(stdout) #set streamhandler to stdout
-consoleHandler.setFormatter(logFormatter)
-# logger.addHandler(consoleHandler)
+from app import telemetry
 
 # Local development convenience: load env vars from .env.local if present.
 # This is a no-op in Docker/K8s where env vars are provided by the runtime.
@@ -49,7 +33,23 @@ except ModuleNotFoundError:
 
 config = helper.read_config()
 
-ENABLE_TELEMETRY = literal_eval(os.getenv('ENABLE_TELEMETRY', 'False'))
+def _parse_bool_env(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+
+    value = raw.strip().lower()
+    if value in {"1", "true", "t", "yes", "y", "on"}:
+        return True
+    if value in {"0", "false", "f", "no", "n", "off", ""}:
+        return False
+
+    raise RuntimeError(
+        f"Invalid boolean for {name}: {raw!r}. Use true/false, 1/0, yes/no, on/off."
+    )
+
+
+ENABLE_TELEMETRY = _parse_bool_env("ENABLE_TELEMETRY", default=False)
 
 
 def _require_env(name: str) -> str:
@@ -62,27 +62,10 @@ def _require_env(name: str) -> str:
     return value
 
 if ENABLE_TELEMETRY:
-    logger.info('ENABLE_TELEMETRY=True, enabling tracing...')
-    # Tracing Configuration
-    resource = Resource(attributes={
-        SERVICE_NAME: "client",
-        "application.name": "client",
-        "env.name": "prod"
-        })
-
-    provider = TracerProvider(resource=resource)
-    processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://otel-opentelemetry-collector.monitoring.svc.cluster.local:4317"))
-    provider.add_span_processor(processor)
-    trace.set_tracer_provider(provider)
-
-    app = Flask(__name__)
-    FlaskInstrumentor().instrument_app(app)
-    app.wsgi_app = OpenTelemetryMiddleware(app.wsgi_app, tracer_provider=provider)
-
-    RequestsInstrumentor().instrument()
+    logger.info('ENABLE_TELEMETRY=True, enabling telemetry...')
 else:
-    logger.info('ENABLE_TELEMETRY=False, tracing is disabled')
-    app = Flask(__name__)
+    logger.info('ENABLE_TELEMETRY=False, telemetry is disabled')
+
 
 MONGODB_USERNAME = _require_env('ME_CONFIG_MONGODB_ADMINUSERNAME')
 MONGODB_PASSWD = _require_env('ME_CONFIG_MONGODB_ADMINPASSWORD')
@@ -92,24 +75,79 @@ POSTGRES_PASSWORD = _require_env('POSTGRES_PASSWORD')
 POSTGRES_DB = _require_env('POSTGRES_DB')
 POSTGRES_URL = _require_env('POSTGRES_URL')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_URL}:5432/{POSTGRES_DB}"
-db = SQLAlchemy(app)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
 
-# pylint: disable=too-few-public-methods
-class CustomersModel(db.Model):
+app = FastAPI(lifespan=lifespan)
+
+def _postgres_dsn() -> str:
+    # In docker-compose.yaml POSTGRES_URL is the hostname (e.g. "postgres").
+    # Allow overriding with a full DSN (e.g. "postgresql+psycopg2://user:pass@host:5432/db").
+    if "://" in POSTGRES_URL:
+        return POSTGRES_URL
+
+    host = POSTGRES_URL
+    port = 5432
+    if ":" in host:
+        host, port_str = host.rsplit(":", 1)
+        try:
+            port = int(port_str)
+        except ValueError:
+            raise RuntimeError(f"Invalid POSTGRES_URL (bad port): {POSTGRES_URL}")
+
+    return f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{host}:{port}/{POSTGRES_DB}"
+
+
+engine = create_engine(_postgres_dsn(), pool_pre_ping=True)
+
+telemetry.configure_telemetry(app=app, engine=engine, enabled=ENABLE_TELEMETRY)
+
+
+
+class Customer(SQLModel, table=True):
     __tablename__ = 'customers'
 
-    customer_id = db.Column(db.Integer, primary_key=True)
-    customer_name = db.Column(db.String())
+    customer_id: int | None = Field(default=None, primary_key=True)
+    customer_name: str
 
-    def __init__(self, name):
-        self.customer_name = name
 
-    def __repr__(self):
-        return f"<Customer {self.customer_name}>"
+def init_db() -> None:
+    SQLModel.metadata.create_all(engine)
 
-with app.app_context():
-    db.create_all()
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+
+
+class CustomerCreate(SQLModel):
+    customer_name: str
+
+
+@app.get('/pg/customer')
+def get_pg_customer(customer_name: str, session: Session = Depends(get_session)):
+    customer = session.exec(
+        select(Customer).where(Customer.customer_name == customer_name)
+    ).first()
+    if customer is None:
+        raise HTTPException(status_code=404, detail='Customer not found')
+    return {
+        'customer_name': customer.customer_name,
+        'customer_id': customer.customer_id,
+        'api_version': 'v1',
+    }
+
+
+@app.post('/pg/customer', status_code=201)
+def post_pg_customer(payload: CustomerCreate, session: Session = Depends(get_session)):
+    new_customer = Customer(customer_name=payload.customer_name)
+    session.add(new_customer)
+    session.commit()
+    session.refresh(new_customer)
+    return {'customer': new_customer.customer_name, 'status': 'inserted', 'api_version': 'v1'}
 
 def get_database():
     CONNECTION_STRING = f"mongodb://{MONGODB_USERNAME}:{MONGODB_PASSWD}@{ME_CONFIG_MONGODB_SERVER}/"
@@ -119,77 +157,37 @@ def get_database():
 def parse_json(data):
     return json.loads(json_util.dumps(data))
 
-@app.route('/', methods = ['GET', 'POST'])
-def home():
-    if(request.method == 'GET'):
-        logger.info('sample log')
-        data = "Hello scaffold from asd"
-        return jsonify({'data': data,'lambda-response': 'asd'})
-    return jsonify({'request': 'POST'})
+class Order(BaseModel):
+    customer_id: str
+    product_name: str
 
-@app.route('/pg/customer', methods = ['GET', 'POST'])
-def pg_customer():
-    if(request.method == 'GET'):
-        logger.info('pg customer get')
-        logger.info(print(request.query_string))
-        customer_name = request.args.get('customer_name')
-        logger.info ("querying postgres for customer: %s", customer_name)
-        customer = CustomersModel.query.filter_by(customer_name=customer_name).first()
-        customer_info = {'customer_name': customer.customer_name,'customer_id': customer.customer_id, 'api_version': 'v1'}
-        logger.info (customer_info)
-        return(jsonify(customer_info))
-    logger.info('pg customer post')
-    logger.info(request.form)
-    logger.info(request.json)
-    customer_name = request.json.get('customer_name')
-    logger.info ("creating customer: %s" ,customer_name)
-    new_customer = CustomersModel(name=customer_name)
-    db.session.add(new_customer)
-    db.session.commit()
-    logger.info("customer %s inserted", customer_name)
-    return jsonify({'customer': customer_name,'status': 'inserted', 'api_version': 'v1'})
+@app.get('/mongo/orders')
+def get_mongo_orders(product_name: Union[str, None] = None):
+    dbname = get_database()
+    collection_name = dbname["orders"]
+    query = {"product_name": product_name} if product_name is not None else {}
+    items = list(collection_name.find(query))
+    return parse_json(items)
 
-@app.route('/mongo/orders', methods = ['GET', 'POST'])
-def mongo_orders():
-    if(request.method == 'GET'):
-        dbname = get_database()
-        collection_name = dbname["orders"]
-        product_name = request.args.get('product_name')
-        item_details = collection_name.find({"product_name" : product_name})
-        items_df = DataFrame(item_details).transpose()
-        output = parse_json(items_df.to_dict())
-        logger.info(output)
-        return output
+@app.post('/mongo/orders', status_code=201 )
+def post_mongo_orders(order: Order):
     dbname = get_database()
     output = orders.post_order(
         dbname,
-        customer_id=request.json.get('customer_id'),
-        product_name=request.json.get('product_name'),
+        customer_id=order.customer_id,
+        product_name=order.product_name,
     )
     return output
-    # dbname = get_database()
-    # collection_name = dbname["orders"]
-    # customer_id = request.json.get('customer_id')
-    # product_name = request.json.get('product_name')
-    # item = {
-    # "customer_id" : customer_id,
-    # "product_name" : product_name,
-    # }
-    # collection_name.insert_one(item)
-    # logger.info("item %s inserted", item)
-    # output=parse_json(dict(item, status="inserted"))
-    # logger.info(output)
-    # return output
 
 
 
-@app.route('/home/<int:num>', methods = ['GET'])
-def disp(num):
-    return jsonify({'data': num**2})
+@app.get('/home/{num}')
+def disp(num: int):
+    return {'data': num**2}
 
-@app.route('/health', methods = ['GET'])
+@app.get('/health')
 def health():
-    return jsonify({'status': 'healthy'})
+    return {'status': 'healthy'}
 
-if __name__ == '__main__':
-    app.run(debug = True,  host="0.0.0.0", port = config['General']['port'])
+# if __name__ == '__main__':
+    # app.run(debug = True,  host="0.0.0.0", port = config['General']['port'])
