@@ -10,7 +10,12 @@ def _parse_sampler() -> Any:
     sampler = os.getenv("OTEL_TRACES_SAMPLER", "always_on").strip().lower()
     sampler_arg = os.getenv("OTEL_TRACES_SAMPLER_ARG", "").strip()
 
-    from opentelemetry.sdk.trace.sampling import ALWAYS_OFF, ALWAYS_ON, ParentBased, TraceIdRatioBased
+    from opentelemetry.sdk.trace.sampling import (
+        ALWAYS_OFF,
+        ALWAYS_ON,
+        ParentBased,
+        TraceIdRatioBased,
+    )
 
     if sampler in {"always_on", "parentbased_always_on"}:
         return ParentBased(ALWAYS_ON)
@@ -40,7 +45,9 @@ def configure_telemetry(*, app: Any, engine: Any | None, enabled: bool) -> None:
 
     try:
         from opentelemetry import trace
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+            OTLPSpanExporter,
+        )
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -56,7 +63,9 @@ def configure_telemetry(*, app: Any, engine: Any | None, enabled: bool) -> None:
         )
         return
 
-    service_name = os.getenv("OTEL_SERVICE_NAME") or os.getenv("SERVICE_NAME") or "python-crud-api"
+    service_name = (
+        os.getenv("OTEL_SERVICE_NAME") or os.getenv("SERVICE_NAME") or "python-crud-api"
+    )
 
     # Resource.create() also reads OTEL_RESOURCE_ATTRIBUTES; we add a few sane defaults.
     resource = Resource.create(

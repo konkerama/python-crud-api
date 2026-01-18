@@ -1,6 +1,7 @@
 from app import orders
 import mongomock
 
+
 def test_insert_into_orders_collection():
     mongo = mongomock.MongoClient()["orders"]
     output = orders.post_order(mongo, "foo", "bar")
