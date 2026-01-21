@@ -9,6 +9,7 @@ dependencies = [
     "helper>=2.5.0",
     "loguru>=0.7.3",
     "opentelemetry-api>=1.39.1",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.39.1",
     "opentelemetry-instrumentation-fastapi>=0.60b1",
     "opentelemetry-instrumentation-pymongo>=0.60b1",
     "opentelemetry-instrumentation-requests>=0.60b1",

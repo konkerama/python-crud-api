@@ -1,9 +1,87 @@
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any
 
 from loguru import logger
+
+
+def _hex_trace_id(trace_id: int) -> str:
+    # OTel trace_id is 16 bytes (32 hex chars)
+    return f"{trace_id:032x}"
+
+
+def _hex_span_id(span_id: int) -> str:
+    # OTel span_id is 8 bytes (16 hex chars)
+    return f"{span_id:016x}"
+
+
+def _trace_url(trace_id_hex: str) -> str | None:
+    """Build a clickable trace URL from an environment template.
+
+    Set `OTEL_TRACE_URL_TEMPLATE` to something like:
+    - Jaeger: http://localhost:16686/trace/{trace_id}
+
+    Only `{trace_id}` is supported.
+    """
+
+    template = os.getenv("OTEL_TRACE_URL_TEMPLATE", "").strip()
+    if not template:
+        return None
+    return template.replace("{trace_id}", trace_id_hex)
+
+
+def configure_logging(*, enabled: bool) -> None:
+    """Configure Loguru to include trace/span correlation fields.
+
+    This is safe to call whether telemetry is enabled or not.
+    When OpenTelemetry isn't present or no span is active, fields are '-'.
+    """
+
+    def _patch(record: dict) -> None:
+        record.setdefault("extra", {})
+        record["extra"].setdefault("trace_id", "-")
+        record["extra"].setdefault("span_id", "-")
+        record["extra"].setdefault("trace_url", "-")
+
+        if not enabled:
+            return
+
+        try:
+            from opentelemetry import trace
+        except ModuleNotFoundError:
+            return
+
+        span = trace.get_current_span()
+        if span is None:
+            return
+
+        ctx = span.get_span_context()
+        if ctx is None or not getattr(ctx, "is_valid", False):
+            return
+
+        trace_id_hex = _hex_trace_id(ctx.trace_id)
+        record["extra"]["trace_id"] = trace_id_hex
+        record["extra"]["span_id"] = _hex_span_id(ctx.span_id)
+        record["extra"]["trace_url"] = _trace_url(trace_id_hex) or "-"
+
+    # Make log output deterministic and always include correlation fields.
+    # This only affects loguru logs (not stdlib logging/uvicorn logs).
+    logger.remove()
+    logger.configure(patcher=_patch)
+    logger.add(
+        sys.stderr,
+        level=os.getenv("LOG_LEVEL", "INFO"),
+        backtrace=False,
+        diagnose=False,
+        enqueue=True,
+        format=(
+            "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | "
+            "trace_id={extra[trace_id]} span_id={extra[span_id]} trace_url={extra[trace_url]} | "
+            "{name}:{function}:{line} - {message}{exception}"
+        ),
+    )
 
 
 def _parse_sampler() -> Any:

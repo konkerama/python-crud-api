@@ -70,6 +70,10 @@ else:
     logger.info("ENABLE_TELEMETRY=False, telemetry is disabled")
 
 
+# Ensure all Loguru logs carry trace_id/span_id fields (and optional trace_url).
+telemetry.configure_logging(enabled=ENABLE_TELEMETRY)
+
+
 MONGODB_USERNAME = _require_env("ME_CONFIG_MONGODB_ADMINUSERNAME")
 MONGODB_PASSWD = _require_env("ME_CONFIG_MONGODB_ADMINPASSWORD")
 ME_CONFIG_MONGODB_SERVER = _require_env("ME_CONFIG_MONGODB_SERVER")
@@ -133,11 +137,16 @@ class CustomerCreate(SQLModel):
 
 @app.get("/pg/customer")
 def get_pg_customer(customer_name: str, session: Session = Depends(get_session)):
+    logger.info(f"PG get customer requested: customer_name='{customer_name}'")
     customer = session.exec(
         select(Customer).where(Customer.customer_name == customer_name)
     ).first()
     if customer is None:
+        logger.warning(f"PG customer not found: customer_name='{customer_name}'")
         raise HTTPException(status_code=404, detail="Customer not found")
+    logger.info(
+        f"PG customer found: customer_id={customer.customer_id} customer_name='{customer.customer_name}'"
+    )
     return {
         "customer_name": customer.customer_name,
         "customer_id": customer.customer_id,
@@ -147,10 +156,14 @@ def get_pg_customer(customer_name: str, session: Session = Depends(get_session))
 
 @app.post("/pg/customer", status_code=201)
 def post_pg_customer(payload: CustomerCreate, session: Session = Depends(get_session)):
+    logger.info(f"PG create customer requested: customer_name='{payload.customer_name}'")
     new_customer = Customer(customer_name=payload.customer_name)
     session.add(new_customer)
     session.commit()
     session.refresh(new_customer)
+    logger.info(
+        f"PG customer inserted: customer_id={new_customer.customer_id} customer_name='{new_customer.customer_name}'"
+    )
     return {
         "customer": new_customer.customer_name,
         "status": "inserted",
@@ -177,20 +190,30 @@ class Order(BaseModel):
 
 @app.get("/mongo/orders")
 def get_mongo_orders(product_name: Union[str, None] = None):
+    logger.info(
+        f"Mongo get orders requested: product_name={product_name!r}"
+    )
     dbname = get_database()
     collection_name = dbname["orders"]
     query = {"product_name": product_name} if product_name is not None else {}
     items = list(collection_name.find(query))
+    logger.info(f"Mongo get orders result count: {len(items)}")
     return parse_json(items)
 
 
 @app.post("/mongo/orders", status_code=201)
 def post_mongo_orders(order: Order):
+    logger.info(
+        f"Mongo create order requested: customer_id='{order.customer_id}' product_name='{order.product_name}'"
+    )
     dbname = get_database()
     output = orders.post_order(
         dbname,
         customer_id=order.customer_id,
         product_name=order.product_name,
+    )
+    logger.info(
+        f"Mongo order inserted: customer_id='{order.customer_id}' product_name='{order.product_name}'"
     )
     return output
 

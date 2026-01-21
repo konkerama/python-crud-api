@@ -35,6 +35,18 @@ Common environment variables:
 - `OTEL_TRACES_SAMPLER=always_on|always_off|traceidratio`
 - `OTEL_TRACES_SAMPLER_ARG=0.1` (only for `traceidratio`)
 
+### Logs ↔ Traces correlation
+
+When `ENABLE_TELEMETRY=True`, Loguru logs are automatically enriched with:
+
+- `trace_id` (32-hex)
+- `span_id` (16-hex)
+- `trace_url` (optional, for clickable links)
+
+To get clickable links in logs, set a trace URL template (only `{trace_id}` is substituted):
+
+- Jaeger UI example: `OTEL_TRACE_URL_TEMPLATE=http://localhost:16686/trace/{trace_id}`
+
 Run application as container locally:
 ``` bash 
 docker compose up --build
