@@ -8,8 +8,7 @@ Local Development
 ``` bash
 # Spin up dependency containers
 docker compose -f docker-compose-local.yml up
-# Run as a module so `app.*` imports work correctly
-uv run -m app.main
+uv run fastapi dev
 
 docker compose --build -f docker-compose.yml up
 

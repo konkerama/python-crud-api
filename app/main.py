@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from typing import Union
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from sqlmodel import Field, Session, SQLModel, create_engine, select, delete
 from app import helper, orders
 import json
 
@@ -170,6 +170,19 @@ def post_pg_customer(payload: CustomerCreate, session: Session = Depends(get_ses
         "api_version": "v1",
     }
 
+@app.delete("/pg/customer")
+def delete_pg_customers(session: Session = Depends(get_session)):
+    logger.info("PG delete all customers requested")
+    customers = session.exec(select(Customer)).all()
+    deleted_count = len(customers)
+    if deleted_count == 0:
+        logger.info("No customers to delete")
+        return {"status": "no-op", "deleted_count": 0, "api_version": "v1"}
+
+    session.exec(delete(Customer))
+    session.commit()
+    logger.info(f"PG customers deleted: count={deleted_count}")
+    return {"status": "deleted", "deleted_count": deleted_count, "api_version": "v1"}
 
 def get_database():
     CONNECTION_STRING = (
@@ -216,6 +229,19 @@ def post_mongo_orders(order: Order):
         f"Mongo order inserted: customer_id='{order.customer_id}' product_name='{order.product_name}'"
     )
     return output
+
+@app.delete("/mongo/orders")
+def delete_mongo_orders():
+    logger.info(
+        f"Mongo delete orders requested"
+    )
+    dbname = get_database()
+    output = orders.delete_orders(dbname)
+    logger.info(
+        f"Mongo orders deleted: deleted_count={output.get('deleted_count', 0)}"
+    )
+    return output
+
 
 
 @app.get("/home/{num}")
