@@ -235,7 +235,7 @@ def post_mongo_orders(order: Order):
 
 @app.delete("/mongo/orders")
 def delete_mongo_orders():
-    logger.info(f"Mongo delete orders requested")
+    logger.info("Mongo delete orders requested")
     dbname = get_database()
     output = orders.delete_orders(dbname)
     logger.info(f"Mongo orders deleted: deleted_count={output.get('deleted_count', 0)}")
