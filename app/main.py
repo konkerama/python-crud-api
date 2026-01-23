@@ -156,7 +156,9 @@ def get_pg_customer(customer_name: str, session: Session = Depends(get_session))
 
 @app.post("/pg/customer", status_code=201)
 def post_pg_customer(payload: CustomerCreate, session: Session = Depends(get_session)):
-    logger.info(f"PG create customer requested: customer_name='{payload.customer_name}'")
+    logger.info(
+        f"PG create customer requested: customer_name='{payload.customer_name}'"
+    )
     new_customer = Customer(customer_name=payload.customer_name)
     session.add(new_customer)
     session.commit()
@@ -169,6 +171,7 @@ def post_pg_customer(payload: CustomerCreate, session: Session = Depends(get_ses
         "status": "inserted",
         "api_version": "v1",
     }
+
 
 @app.delete("/pg/customer")
 def delete_pg_customers(session: Session = Depends(get_session)):
@@ -183,6 +186,7 @@ def delete_pg_customers(session: Session = Depends(get_session)):
     session.commit()
     logger.info(f"PG customers deleted: count={deleted_count}")
     return {"status": "deleted", "deleted_count": deleted_count, "api_version": "v1"}
+
 
 def get_database():
     CONNECTION_STRING = (
@@ -203,9 +207,7 @@ class Order(BaseModel):
 
 @app.get("/mongo/orders")
 def get_mongo_orders(product_name: Union[str, None] = None):
-    logger.info(
-        f"Mongo get orders requested: product_name={product_name!r}"
-    )
+    logger.info(f"Mongo get orders requested: product_name={product_name!r}")
     dbname = get_database()
     collection_name = dbname["orders"]
     query = {"product_name": product_name} if product_name is not None else {}
@@ -230,18 +232,14 @@ def post_mongo_orders(order: Order):
     )
     return output
 
+
 @app.delete("/mongo/orders")
 def delete_mongo_orders():
-    logger.info(
-        f"Mongo delete orders requested"
-    )
+    logger.info(f"Mongo delete orders requested")
     dbname = get_database()
     output = orders.delete_orders(dbname)
-    logger.info(
-        f"Mongo orders deleted: deleted_count={output.get('deleted_count', 0)}"
-    )
+    logger.info(f"Mongo orders deleted: deleted_count={output.get('deleted_count', 0)}")
     return output
-
 
 
 @app.get("/home/{num}")
@@ -252,4 +250,3 @@ def disp(num: int):
 @app.get("/health")
 def health():
     return {"status": "healthy"}
-

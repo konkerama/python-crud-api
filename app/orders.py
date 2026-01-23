@@ -21,6 +21,7 @@ def post_order(connection, customer_id, product_name):
 
     return output
 
+
 def delete_orders(connection):
     collection_name = connection["orders"]
     deleted_count = collection_name.delete_many({}).deleted_count
