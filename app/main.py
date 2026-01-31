@@ -7,7 +7,7 @@ from pathlib import Path
 
 # from flask import Flask, jsonify, request
 from contextlib import asynccontextmanager
-from typing import Union
+from typing import Union, Callable
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Field, Session, SQLModel, create_engine, select, delete
@@ -18,6 +18,10 @@ from pymongo import MongoClient
 from bson import json_util
 
 from app import telemetry
+
+from prometheus_fastapi_instrumentator import Instrumentator, metrics
+from app.metrics import HTTP_REQUESTED_CUSTOMERS_TOTAL, inc_requested_customer
+
 
 # Local development convenience: load env vars from .env.local if present.
 # This is a no-op in Docker/K8s where env vars are provided by the runtime.
@@ -115,6 +119,22 @@ engine = create_engine(_postgres_dsn(), pool_pre_ping=True)
 telemetry.configure_telemetry(app=app, engine=engine, enabled=ENABLE_TELEMETRY)
 
 
+def http_requested_languages_total() -> Callable[[Info], None]:
+    def instrumentation(info: Info) -> None:
+        langs = set()
+        lang_str = info.request.headers.get("Accept-Language", "")
+        for element in lang_str.split(","):
+            element = element.split(";")[0].strip().lower()
+            if element:
+                langs.add(element)
+        for language in langs:
+            HTTP_REQUESTED_LANGUAGES_TOTAL.labels(language).inc()
+
+    return instrumentation
+
+
+Instrumentator().instrument(app).expose(app).add(http_requested_languages_total())
+
 class Customer(SQLModel, table=True):
     __tablename__ = "customers"
 
@@ -144,6 +164,7 @@ def get_pg_customer(customer_name: str, session: Session = Depends(get_session))
     if customer is None:
         logger.warning(f"PG customer not found: customer_name='{customer_name}'")
         raise HTTPException(status_code=404, detail="Customer not found")
+    inc_requested_customer(customer_name)
     logger.info(
         f"PG customer found: customer_id={customer.customer_id} customer_name='{customer.customer_name}'"
     )
