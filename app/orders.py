@@ -1,9 +1,6 @@
-import logging
+from loguru import logger
 import json
 from bson import json_util
-
-logger = logging.getLogger("werkzeug")
-logger.setLevel(logging.INFO)
 
 
 def parse_json(data):

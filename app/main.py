@@ -1,11 +1,10 @@
 """Using flask to make an api"""
 
-# import necessary libraries and functions
-import os
 from loguru import logger
-from pathlib import Path
 
-# from flask import Flask, jsonify, request
+
+# import necessary libraries and functions
+from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Union, Callable
 from fastapi import Depends, FastAPI, HTTPException
@@ -95,6 +94,41 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# import uuid
+# import time
+# from fastapi import Request
+
+
+# # Loguru middleware for request logging with tracing context
+# @app.middleware("http")
+# async def logging_middleware(request: Request, call_next):
+#     request_id = str(uuid.uuid4())
+#     start = time.time()
+
+#     # Try to extract tracing context from telemetry if available
+#     trace_id = getattr(request.state, "trace_id", None)
+#     span_id = getattr(request.state, "span_id", None)
+#     trace_url = getattr(request.state, "trace_url", None)
+
+#     context = {"request_id": request_id}
+#     if trace_id:
+#         context["trace_id"] = trace_id
+#     if span_id:
+#         context["span_id"] = span_id
+#     if trace_url:
+#         context["trace_url"] = trace_url
+
+#     with logger.contextualize(**context):
+#         response = await call_next(request)
+#         duration = (time.time() - start) * 1000
+#         logger.bind(
+#             method=request.method,
+#             path=request.url.path,
+#             status_code=response.status_code,
+#             duration_ms=round(duration, 2),
+#         ).info("request_completed")
+#     return response
+
 
 def _postgres_dsn() -> str:
     # In docker-compose.yaml POSTGRES_URL is the hostname (e.g. "postgres").
@@ -134,6 +168,7 @@ def http_requested_languages_total() -> Callable[[Info], None]:
 
 
 Instrumentator().instrument(app).expose(app).add(http_requested_languages_total())
+
 
 class Customer(SQLModel, table=True):
     __tablename__ = "customers"

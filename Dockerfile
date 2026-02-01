@@ -13,4 +13,4 @@ COPY app /app/app
 RUN uv sync --frozen --no-cache --no-dev
 
 # Run the application.
-CMD ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8080", "--host", "0.0.0.0"]
+CMD ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--no-access-log","--log-level", "critical"]

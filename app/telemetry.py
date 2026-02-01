@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import sys
 from typing import Any
 
 from loguru import logger
@@ -66,22 +65,18 @@ def configure_logging(*, enabled: bool) -> None:
         record["extra"]["span_id"] = _hex_span_id(ctx.span_id)
         record["extra"]["trace_url"] = _trace_url(trace_id_hex) or "-"
 
-    # Make log output deterministic and always include correlation fields.
-    # This only affects loguru logs (not stdlib logging/uvicorn logs).
-    logger.remove()
+    if enabled and not os.getenv("OTEL_TRACE_URL_TEMPLATE", "").strip():
+        logger.warning(
+            "Telemetry is enabled but OTEL_TRACE_URL_TEMPLATE is not set; "
+            "logs will include trace_id/span_id but trace_url will be '-'."
+        )
+
+    # Only enrich log records with correlation fields.
+    # Do NOT remove/re-add handlers here, because the app may have already
+    # configured Loguru (e.g. JSON `serialize=True`) and we don't want to
+    # override that.
+    # Note: this affects only Loguru logs, not stdlib logging/uvicorn logs.
     logger.configure(patcher=_patch)
-    logger.add(
-        sys.stderr,
-        level=os.getenv("LOG_LEVEL", "INFO"),
-        backtrace=False,
-        diagnose=False,
-        enqueue=True,
-        format=(
-            "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | "
-            "trace_id={extra[trace_id]} span_id={extra[span_id]} trace_url={extra[trace_url]} | "
-            "{name}:{function}:{line} - {message}{exception}"
-        ),
-    )
 
 
 def _parse_sampler() -> Any:

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-URL="localhost:8000"
+URL="localhost:8080"
 
 # URL=$(minikube service dev-python-app -n orders --url)
 curl -X POST $URL/pg/customer -d '{"customer_name":"mark"}' -H "Content-Type: application/json" -s | jq -c
